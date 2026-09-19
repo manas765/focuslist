@@ -9,6 +9,10 @@ import {
   renderAnalytics
 } from "./ui.js";
 
+import {
+  recommendNextTask
+} from "./intelligence.js";
+
 
 const state =
   loadState();
@@ -31,15 +35,10 @@ let focusTaskId =
 
 
 let timer = {
-
-  seconds:1500,
-
-  running:false,
-
-  interval:null,
-
-  minutes:25
-
+  seconds: 1500,
+  running: false,
+  interval: null,
+  minutes: 25
 };
 
 
@@ -75,7 +74,7 @@ function today() {
 
   return new Date()
     .toISOString()
-    .slice(0,10);
+    .slice(0, 10);
 
 }
 
@@ -107,11 +106,10 @@ function showToast(message) {
 
   showToast.t =
     setTimeout(
-      () => {
+      () =>
         element.classList.remove(
           "show"
-        );
-      },
+        ),
       2200
     );
 }
@@ -171,35 +169,35 @@ function matches(task) {
 function sortTasks(tasks) {
 
   const rank = {
-
-    high:0,
-
-    medium:1,
-
-    low:2
-
+    high: 0,
+    medium: 1,
+    low: 2
   };
 
 
   return [...tasks].sort(
-    (a,b) => {
+    (a, b) => {
 
       if (
         sort === "priority"
       ) {
+
         return (
           rank[a.priority] -
           rank[b.priority]
         );
+
       }
 
 
       if (
         sort === "created"
       ) {
+
         return b.createdAt.localeCompare(
           a.createdAt
         );
+
       }
 
 
@@ -258,8 +256,8 @@ function sortTasks(tasks) {
 function taskById(id) {
 
   return state.tasks.find(
-    task =>
-      task.id === id
+    t =>
+      t.id === id
   );
 
 }
@@ -267,9 +265,9 @@ function taskById(id) {
 
 /* ADD TASK */
 
-function addTask(e) {
+function addTask(event) {
 
-  e.preventDefault();
+  event.preventDefault();
 
 
   const title =
@@ -311,17 +309,19 @@ function addTask(e) {
         .value
         .trim(),
 
-    completed:false,
+    completed:
+      false,
 
     createdAt:
       new Date().toISOString(),
 
-    completedDate:""
+    completedDate:
+      ""
 
   });
 
 
-  e.target.reset();
+  event.target.reset();
 
 
   $("#taskPriority").value =
@@ -342,7 +342,7 @@ function addTask(e) {
 }
 
 
-/* TOGGLE TASK */
+/* TOGGLE */
 
 function toggleTask(id) {
 
@@ -415,10 +415,8 @@ function editTask(id) {
 
 
   if (notes !== null) {
-
     task.notes =
       notes.trim();
-
   }
 
 
@@ -433,8 +431,8 @@ function deleteTask(id) {
 
   const index =
     state.tasks.findIndex(
-      task =>
-        task.id === id
+      t =>
+        t.id === id
     );
 
 
@@ -485,9 +483,7 @@ function focusOn(id) {
 
   stopTimer();
 
-
   setTimer(25);
-
 
   render();
 
@@ -512,15 +508,15 @@ function reorder(
 
   const a =
     state.tasks.findIndex(
-      task =>
-        task.id === from
+      t =>
+        t.id === from
     );
 
 
   const b =
     state.tasks.findIndex(
-      task =>
-        task.id === to
+      t =>
+        t.id === to
     );
 
 
@@ -553,7 +549,7 @@ function reorder(
 }
 
 
-/* RENDER TASKS */
+/* TASK RENDER */
 
 function renderTasks() {
 
@@ -568,12 +564,11 @@ function renderTasks() {
   renderTaskList(
     $("#taskList"),
     list,
-
     {
-      toggle:toggleTask,
-      edit:editTask,
-      delete:deleteTask,
-      focus:focusOn,
+      toggle: toggleTask,
+      edit: editTask,
+      delete: deleteTask,
+      focus: focusOn,
       reorder
     }
   );
@@ -581,24 +576,22 @@ function renderTasks() {
 
   const inbox =
     state.tasks.filter(
-      task =>
-        !task.dueAt &&
-        !task.completed
+      t =>
+        !t.dueAt &&
+        !t.completed
     );
 
 
   renderTaskList(
     $("#inboxList"),
     inbox,
-
     {
-      toggle:toggleTask,
-      edit:editTask,
-      delete:deleteTask,
-      focus:focusOn,
+      toggle: toggleTask,
+      edit: editTask,
+      delete: deleteTask,
+      focus: focusOn,
       reorder
     },
-
     "Your inbox is clear."
   );
 
@@ -606,42 +599,42 @@ function renderTasks() {
   const queue =
     state.tasks
       .filter(
-        task =>
-          !task.completed
+        t =>
+          !t.completed
       )
-      .slice(0,5);
+      .slice(0, 5);
 
 
   $("#focusQueue").innerHTML =
     queue.length
 
-      ? queue.map(
-          task => `
+      ? queue
+          .map(
+            t => `
+              <div class="queue-item">
 
-            <div class="queue-item">
+                <button
+                  data-queue="${t.id}"
+                >
+                  ${escapeText(
+                    t.title
+                  )}
+                </button>
 
-              <button
-                data-queue="${task.id}"
-              >
-                ${escapeText(
-                  task.title
-                )}
-              </button>
+                <small>
+                  ${t.estimate || 25}m
+                </small>
 
-              <small>
-                ${task.estimate || 25}m
-              </small>
-
-            </div>
-
-          `
-        ).join("")
+              </div>
+            `
+          )
+          .join("")
 
       : `
-          <div class="empty">
-            No open tasks.
-          </div>
-        `;
+        <div class="empty">
+          No open tasks.
+        </div>
+      `;
 
 
   $$(
@@ -666,14 +659,144 @@ function escapeText(value) {
   return String(value)
     .replace(
       /[&<>"']/g,
-      char =>
+      character =>
         ({
-          "&":"&amp;",
-          "<":"&lt;",
-          ">":"&gt;",
-          '"':"&quot;",
-          "'":"&#039;"
-        }[char])
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        }[character])
+    );
+
+}
+
+
+/* FOCUS INTELLIGENCE */
+
+function renderRecommendation() {
+
+  const container =
+    $("#recommendationCard");
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const recommendation =
+    recommendNextTask(
+      state.tasks
+    );
+
+
+  if (!recommendation) {
+
+    container.innerHTML = `
+
+      <div>
+
+        <div class="recommendation-label">
+          QUEUE CLEAR
+        </div>
+
+        <h3>
+          You're caught up.
+        </h3>
+
+        <p>
+          Complete your next task or capture a new one when something needs your attention.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  const {
+    task,
+    score,
+    reasons
+  } =
+    recommendation;
+
+
+  container.innerHTML = `
+
+    <div>
+
+      <div class="recommendation-label">
+        RECOMMENDED NEXT
+      </div>
+
+      <h3>
+        ${escapeText(
+          task.title
+        )}
+      </h3>
+
+      <p>
+        Focus on this task first based on urgency, priority and estimated effort.
+      </p>
+
+      <div class="recommendation-reasons">
+
+        ${
+          reasons
+            .map(
+              reason =>
+                `
+                  <span>
+                    ${escapeText(
+                      reason
+                    )}
+                  </span>
+                `
+            )
+            .join("")
+        }
+
+      </div>
+
+    </div>
+
+
+    <div class="recommendation-score">
+
+      <strong>
+        ${Math.round(score)}
+      </strong>
+
+      <small>
+        FOCUS SCORE
+      </small>
+
+      <button
+        class="primary-button"
+        data-recommend-focus
+      >
+        Start focus
+      </button>
+
+    </div>
+
+  `;
+
+
+  container
+    .querySelector(
+      "[data-recommend-focus]"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        focusOn(
+          task.id
+        )
     );
 
 }
@@ -712,13 +835,12 @@ function renderFocus() {
         `
 
         : `
-          A focused session turns
-          an intention into measurable progress.
+          A focused session turns an intention into measurable progress.
         `;
 }
 
 
-/* VIEWS */
+/* VIEW */
 
 function renderView() {
 
@@ -847,6 +969,8 @@ function render() {
     state
   );
 
+  renderRecommendation();
+
   renderTasks();
 
   renderAnalytics(
@@ -881,6 +1005,8 @@ function applyTheme() {
 }
 
 
+/* NAVIGATION */
+
 function setView(view) {
 
   currentView =
@@ -889,8 +1015,8 @@ function setView(view) {
   render();
 
   window.scrollTo({
-    top:0,
-    behavior:"smooth"
+    top: 0,
+    behavior: "smooth"
   });
 
 }
@@ -933,7 +1059,8 @@ function updateTimerUI() {
   const minutes =
     String(
       Math.floor(
-        timer.seconds / 60
+        timer.seconds /
+        60
       )
     ).padStart(
       2,
@@ -943,7 +1070,8 @@ function updateTimerUI() {
 
   const seconds =
     String(
-      timer.seconds % 60
+      timer.seconds %
+      60
     ).padStart(
       2,
       "0"
@@ -995,7 +1123,6 @@ function startTimer() {
     stopTimer();
 
     return;
-
   }
 
 
@@ -1045,7 +1172,8 @@ function startTimer() {
               uid(),
 
             date:
-              new Date().toISOString(),
+              new Date()
+                .toISOString(),
 
             minutes:
               mins,
@@ -1072,7 +1200,6 @@ function startTimer() {
 
 
           save();
-
 
           setTimer(25);
 
@@ -1113,7 +1240,7 @@ function openCommands() {
 }
 
 
-function renderCommands(q) {
+function renderCommands(query) {
 
   const commands = [
 
@@ -1122,7 +1249,9 @@ function renderCommands(q) {
       "N",
       () => {
 
-        setView("today");
+        setView(
+          "today"
+        );
 
         $("#taskTitle")
           .focus();
@@ -1134,35 +1263,43 @@ function renderCommands(q) {
       "Focus mode",
       "F",
       () =>
-        setView("focus")
+        setView(
+          "focus"
+        )
     ],
 
     [
       "Insights",
       "4",
       () =>
-        setView("analytics")
+        setView(
+          "analytics"
+        )
     ],
 
     [
       "Show inbox",
       "2",
       () =>
-        setView("inbox")
+        setView(
+          "inbox"
+        )
     ],
 
     [
       "Toggle theme",
       "T",
       () =>
-        $("#themeToggle").click()
+        $("#themeToggle")
+          .click()
     ],
 
     [
       "Clear completed",
       "",
       () =>
-        $("#clearCompleted").click()
+        $("#clearCompleted")
+          .click()
     ]
 
   ].filter(
@@ -1170,7 +1307,7 @@ function renderCommands(q) {
       command[0]
         .toLowerCase()
         .includes(
-          q.toLowerCase()
+          query.toLowerCase()
         )
   );
 
@@ -1180,7 +1317,7 @@ function renderCommands(q) {
 
       commands
         .map(
-          (command,index) => `
+          (command, index) => `
 
             <button
               class="command-item"
@@ -1227,7 +1364,7 @@ function renderCommands(q) {
 }
 
 
-/* EVENT LISTENERS */
+/* EVENTS */
 
 $("#taskForm")
   .addEventListener(
@@ -1306,7 +1443,9 @@ $$(".filter-link")
             .value =
               currentFilter;
 
-          setView("today");
+          setView(
+            "today"
+          );
 
           renderTasks();
 
@@ -1333,13 +1472,17 @@ $("#themeToggle")
 $("#focusHeaderButton")
   .onclick =
     () =>
-      setView("focus");
+      setView(
+        "focus"
+      );
 
 
 $("#backToToday")
   .onclick =
     () =>
-      setView("today");
+      setView(
+        "today"
+      );
 
 
 $("#timerStart")
@@ -1381,8 +1524,8 @@ $("#clearCompleted")
 
       state.tasks =
         state.tasks.filter(
-          task =>
-            !task.completed
+          t =>
+            !t.completed
         );
 
 
@@ -1468,11 +1611,13 @@ document.addEventListener(
   event => {
 
     if (
-      event.key === "Escape"
+      event.key ===
+      "Escape"
     ) {
 
       if (
-        $("#commandDialog").open
+        $("#commandDialog")
+          .open
       ) {
 
         $("#commandDialog")
@@ -1485,9 +1630,12 @@ document.addEventListener(
 
 
     if (
-      (event.ctrlKey ||
-       event.metaKey) &&
-      event.key.toLowerCase() === "k"
+      (
+        event.ctrlKey ||
+        event.metaKey
+      ) &&
+      event.key.toLowerCase() ===
+      "k"
     ) {
 
       event.preventDefault();
@@ -1495,7 +1643,6 @@ document.addEventListener(
       openCommands();
 
       return;
-
     }
 
 
@@ -1518,7 +1665,9 @@ document.addEventListener(
 
       event.preventDefault();
 
-      setView("today");
+      setView(
+        "today"
+      );
 
       $("#searchInput")
         .focus();
@@ -1527,12 +1676,15 @@ document.addEventListener(
 
 
     if (
-      event.key.toLowerCase() === "n"
+      event.key.toLowerCase() ===
+      "n"
     ) {
 
       event.preventDefault();
 
-      setView("today");
+      setView(
+        "today"
+      );
 
       $("#taskTitle")
         .focus();
@@ -1541,12 +1693,15 @@ document.addEventListener(
 
 
     if (
-      event.key.toLowerCase() === "f"
+      event.key.toLowerCase() ===
+      "f"
     ) {
 
       event.preventDefault();
 
-      setView("focus");
+      setView(
+        "focus"
+      );
 
     }
 
@@ -1573,7 +1728,8 @@ document.addEventListener(
 
 
     if (
-      event.key.toLowerCase() === "t"
+      event.key.toLowerCase() ===
+      "t"
     ) {
 
       $("#themeToggle")
@@ -1591,7 +1747,5 @@ window.addEventListener(
     stopTimer()
 );
 
-
-/* START */
 
 render();

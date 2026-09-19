@@ -1,5 +1,5 @@
 const CACHE =
-  "focuslist-shell-v1";
+  "focuslist-shell-v2";
 
 
 const ASSETS = [
@@ -17,6 +17,14 @@ const ASSETS = [
   "./js/ui.js",
 
   "./js/analytics.js",
+
+  "./js/commands.js",
+
+  "./js/focus.js",
+
+  "./js/tasks.js",
+
+  "./js/intelligence.js",
 
   "./manifest.webmanifest"
 
@@ -59,12 +67,10 @@ self.addEventListener(
             Promise.all(
 
               keys
-
                 .filter(
                   key =>
                     key !== CACHE
                 )
-
                 .map(
                   key =>
                     caches.delete(

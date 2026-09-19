@@ -3,16 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <meta
-    name="description"
-    content="FocusList is a distraction-free task and focus workspace with planning, focus sessions and productivity insights."
-  >
-
   <meta name="theme-color" content="#101318">
-
+  <meta name="description" content="FocusList is a distraction-free task and focus workspace with planning, focus sessions and productivity insights.">
   <title>FocusList — Plan less. Focus more.</title>
-
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
@@ -23,7 +16,6 @@
 
 <div class="app-shell">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" aria-label="Primary navigation">
 
     <div class="brand">
@@ -116,7 +108,6 @@
   </aside>
 
 
-  <!-- MAIN -->
   <main id="main" class="main">
 
     <header class="topbar">
@@ -161,9 +152,10 @@
 
 
     <!-- TODAY -->
+
     <section id="dashboardView" class="view">
 
-      <div class="stat-grid">
+      <div class="stat-grid" aria-label="Productivity overview">
 
         <article class="stat-card">
           <span>Today</span>
@@ -192,17 +184,58 @@
       </div>
 
 
+      <!-- FOCUS INTELLIGENCE -->
+
+      <section
+        class="panel intelligence-panel"
+        aria-labelledby="intelligenceHeading"
+      >
+
+        <div class="panel-heading">
+
+          <div>
+            <span class="eyebrow">
+              FOCUS INTELLIGENCE
+            </span>
+
+            <h2 id="intelligenceHeading">
+              What should you do next?
+            </h2>
+          </div>
+
+          <span class="ai-badge">
+            LOCAL • EXPLAINABLE
+          </span>
+
+        </div>
+
+        <div
+          id="recommendationCard"
+          class="recommendation-card"
+        ></div>
+
+      </section>
+
+
       <div class="workspace-grid">
 
         <!-- TASK COMPOSER -->
-        <section class="panel composer-panel">
+
+        <section
+          class="panel composer-panel"
+          aria-labelledby="addHeading"
+        >
 
           <div class="panel-heading">
 
             <div>
-              <span class="eyebrow">CAPTURE</span>
+              <span class="eyebrow">
+                CAPTURE
+              </span>
 
-              <h2>Add a task</h2>
+              <h2 id="addHeading">
+                Add a task
+              </h2>
             </div>
 
             <button
@@ -215,7 +248,10 @@
           </div>
 
 
-          <form id="taskForm" class="composer">
+          <form
+            id="taskForm"
+            class="composer"
+          >
 
             <label
               class="sr-only"
@@ -240,6 +276,7 @@
                 id="taskPriority"
                 aria-label="Priority"
               >
+
                 <option value="low">
                   Low priority
                 </option>
@@ -254,6 +291,7 @@
                 <option value="high">
                   High priority
                 </option>
+
               </select>
 
 
@@ -307,14 +345,24 @@
 
 
         <!-- DAILY TARGET -->
-        <section class="panel goal-panel">
+
+        <section
+          class="panel goal-panel"
+          aria-labelledby="goalHeading"
+        >
 
           <div class="panel-heading">
 
             <div>
-              <span class="eyebrow">DAILY PLAN</span>
 
-              <h2>Make today count</h2>
+              <span class="eyebrow">
+                DAILY PLAN
+              </span>
+
+              <h2 id="goalHeading">
+                Make today count
+              </h2>
+
             </div>
 
             <button
@@ -335,8 +383,15 @@
           >
 
             <div>
-              <strong id="goalPercent">0%</strong>
-              <span>done</span>
+
+              <strong id="goalPercent">
+                0%
+              </strong>
+
+              <span>
+                done
+              </span>
+
             </div>
 
           </div>
@@ -352,6 +407,7 @@
 
 
       <!-- TASK LIST -->
+
       <section class="task-section">
 
         <div class="toolbar">
@@ -445,6 +501,7 @@
 
 
     <!-- FOCUS MODE -->
+
     <section
       id="focusView"
       class="view hidden"
@@ -466,7 +523,6 @@
             A focused session turns an intention into measurable progress.
           </p>
 
-
           <div
             class="timer"
             id="timerDisplay"
@@ -474,7 +530,6 @@
           >
             25:00
           </div>
-
 
           <div class="timer-controls">
 
@@ -493,7 +548,6 @@
             </button>
 
           </div>
-
 
           <div class="timer-options">
 
@@ -514,7 +568,6 @@
 
           </div>
 
-
           <div class="focus-note">
             Tip: hide distractions, work until the timer ends, then log the session.
           </div>
@@ -527,6 +580,7 @@
           <div class="panel-heading">
 
             <div>
+
               <span class="eyebrow">
                 UP NEXT
               </span>
@@ -534,6 +588,7 @@
               <h2>
                 Focus queue
               </h2>
+
             </div>
 
           </div>
@@ -548,6 +603,7 @@
 
 
     <!-- ANALYTICS -->
+
     <section
       id="analyticsView"
       class="view hidden"
@@ -560,6 +616,7 @@
           <div class="panel-heading">
 
             <div>
+
               <span class="eyebrow">
                 LAST 7 DAYS
               </span>
@@ -567,6 +624,7 @@
               <h2>
                 Completion rhythm
               </h2>
+
             </div>
 
           </div>
@@ -585,6 +643,7 @@
           <div class="panel-heading">
 
             <div>
+
               <span class="eyebrow">
                 INSIGHTS
               </span>
@@ -592,6 +651,7 @@
               <h2>
                 Your work pattern
               </h2>
+
             </div>
 
           </div>
@@ -610,6 +670,7 @@
           <div class="panel-heading">
 
             <div>
+
               <span class="eyebrow">
                 TASK MIX
               </span>
@@ -617,6 +678,7 @@
               <h2>
                 By priority
               </h2>
+
             </div>
 
           </div>
@@ -634,6 +696,7 @@
           <div class="panel-heading">
 
             <div>
+
               <span class="eyebrow">
                 FOCUS TIME
               </span>
@@ -641,6 +704,7 @@
               <h2>
                 Minutes logged
               </h2>
+
             </div>
 
           </div>
@@ -665,6 +729,7 @@
 
 
     <!-- INBOX -->
+
     <section
       id="inboxView"
       class="view hidden"
@@ -722,6 +787,7 @@
 
 
 <!-- COMMAND PALETTE -->
+
 <dialog
   id="commandDialog"
   class="command-dialog"
@@ -751,7 +817,8 @@
 </dialog>
 
 
-<!-- DAILY TARGET DIALOG -->
+<!-- DAILY TARGET -->
+
 <dialog
   id="targetDialog"
   class="small-dialog"
@@ -807,7 +874,10 @@
 ></div>
 
 
-<script type="module" src="js/app.js"></script>
+<script
+  type="module"
+  src="js/app.js"
+></script>
 
 <script>
   if ("serviceWorker" in navigator) {

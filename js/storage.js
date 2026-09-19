@@ -7,11 +7,8 @@ const defaults = {
   theme: "light"
 };
 
-
 export function loadState() {
-
   try {
-
     const raw = localStorage.getItem(KEY);
 
     if (!raw) {
@@ -24,30 +21,23 @@ export function loadState() {
       ...structuredClone(defaults),
       ...parsed,
 
-      tasks:
-        Array.isArray(parsed.tasks)
-          ? parsed.tasks
-          : [],
+      tasks: Array.isArray(parsed.tasks)
+        ? parsed.tasks
+        : [],
 
-      sessions:
-        Array.isArray(parsed.sessions)
-          ? parsed.sessions
-          : []
+      sessions: Array.isArray(parsed.sessions)
+        ? parsed.sessions
+        : []
     };
 
   } catch {
-
     return structuredClone(defaults);
-
   }
 }
 
-
 export function saveState(state) {
-
   localStorage.setItem(
     KEY,
     JSON.stringify(state)
   );
-
 }

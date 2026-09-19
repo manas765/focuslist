@@ -1,20 +1,13 @@
 function dayKey(date) {
-
   const d = new Date(date);
-
   return d.toISOString().slice(0, 10);
 }
 
-
 export function todayKey() {
-
   return dayKey(new Date());
-
 }
 
-
 export function startOfWeek() {
-
   const d = new Date();
 
   const day = d.getDay();
@@ -38,32 +31,32 @@ export function startOfWeek() {
   return d;
 }
 
-
 export function completionStats(tasks) {
 
   const active =
     tasks.filter(
-      task => !task.completed
+      t => !t.completed
     );
 
   const completed =
     tasks.filter(
-      task => task.completed
+      t => t.completed
     );
 
   const today =
     todayKey();
 
   const todayTasks =
-    tasks.filter(task =>
-      dayKey(task.createdAt) === today ||
-      task.completedDate === today ||
-      task.dueAt === today
+    tasks.filter(
+      t =>
+        dayKey(t.createdAt) === today ||
+        t.completedDate === today ||
+        t.dueAt === today
     );
 
   const todayDone =
     todayTasks.filter(
-      task => task.completed
+      t => t.completed
     ).length;
 
   return {
@@ -87,9 +80,9 @@ export function completionStats(tasks) {
             100
           )
         : 0
+
   };
 }
-
 
 export function weeklyFocusMinutes(sessions) {
 
@@ -98,24 +91,27 @@ export function weeklyFocusMinutes(sessions) {
 
   return sessions
     .filter(
-      session =>
-        new Date(session.date) >= start
+      s =>
+        new Date(s.date) >= start
     )
     .reduce(
-      (sum, session) =>
-        sum + (session.minutes || 0),
+      (sum, s) =>
+        sum + (s.minutes || 0),
       0
     );
 }
-
 
 export function productiveStreak(tasks) {
 
   const doneDays =
     new Set(
       tasks
-        .filter(task => task.completedDate)
-        .map(task => task.completedDate)
+        .filter(
+          t => t.completedDate
+        )
+        .map(
+          t => t.completedDate
+        )
     );
 
   let streak = 0;
@@ -137,7 +133,6 @@ export function productiveStreak(tasks) {
 
   return streak;
 }
-
 
 export function lastSevenDays(tasks) {
 
@@ -167,24 +162,22 @@ export function lastSevenDays(tasks) {
 
     const count =
       tasks.filter(
-        task =>
-          task.completedDate === key
+        t =>
+          t.completedDate === key
       ).length;
 
     result.push({
-
       key,
 
       label:
         d.toLocaleDateString(
           undefined,
           {
-            weekday:"short"
+            weekday: "short"
           }
         ),
 
       count
-
     });
   }
 

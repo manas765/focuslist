@@ -12,13 +12,14 @@ const escapeHTML =
     String(value ?? "")
       .replace(
         /[&<>"']/g,
-        ch => ({
-          "&":"&amp;",
-          "<":"&lt;",
-          ">":"&gt;",
-          '"':"&quot;",
-          "'":"&#039;"
-        }[ch])
+        ch =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          }[ch])
       );
 
 
@@ -49,6 +50,7 @@ export function dueLabel(dueAt) {
       86400000
     );
 
+
   if (diff < 0) {
     return "Overdue";
   }
@@ -64,8 +66,8 @@ export function dueLabel(dueAt) {
   return due.toLocaleDateString(
     undefined,
     {
-      day:"numeric",
-      month:"short"
+      day: "numeric",
+      month: "short"
     }
   );
 }
@@ -99,197 +101,243 @@ export function renderTaskList(
 
 
   container.innerHTML =
-    tasks.map(task => {
+    tasks
+      .map(
+        task => {
 
-      const due =
-        dueLabel(task.dueAt);
-
-      return `
-
-        <article
-          class="task-card ${task.completed ? "task-done" : ""}"
-          draggable="true"
-          data-id="${task.id}"
-        >
-
-          <div
-            class="priority-bar priority-${task.priority}"
-            aria-hidden="true"
-          ></div>
+          const due =
+            dueLabel(
+              task.dueAt
+            );
 
 
-          <button
-            class="check ${task.completed ? "done" : ""}"
-            data-action="toggle"
-            aria-label="${
-              task.completed
-                ? "Mark incomplete"
-                : "Mark complete"
-            }"
-          >
-            ${task.completed ? "✓" : ""}
-          </button>
+          return `
 
-
-          <div>
-
-            <div class="task-title">
-              ${escapeHTML(task.title)}
-            </div>
-
-
-            <div class="task-meta">
-
-              <span class="badge">
-                ${escapeHTML(task.priority)} priority
-              </span>
-
-              <span class="badge">
-                ${task.estimate || 25} min
-              </span>
-
-              ${
-                task.project
-                  ? `
-                    <span class="badge project">
-                      ${escapeHTML(task.project)}
-                    </span>
-                  `
+            <article
+              class="task-card ${
+                task.completed
+                  ? "task-done"
                   : ""
-              }
-
-              ${
-                due
-                  ? `
-                    <span
-                      class="badge ${
-                        due === "Overdue"
-                          ? "overdue"
-                          : ""
-                      }"
-                    >
-                      ${due}
-                    </span>
-                  `
-                  : ""
-              }
-
-            </div>
-
-
-            ${
-              task.notes
-                ? `
-                  <div class="task-note">
-                    ${escapeHTML(task.notes)}
-                  </div>
-                `
-                : ""
-            }
-
-          </div>
-
-
-          <div class="task-actions">
-
-            ${
-              !task.completed
-                ? `
-                  <button
-                    data-action="focus"
-                    title="Focus on this task"
-                    aria-label="Focus on ${escapeHTML(task.title)}"
-                  >
-                    ▶
-                  </button>
-                `
-                : ""
-            }
-
-            <button
-              data-action="edit"
-              title="Edit task"
-              aria-label="Edit ${escapeHTML(task.title)}"
+              }"
+              draggable="true"
+              data-id="${task.id}"
             >
-              ✎
-            </button>
 
-            <button
-              data-action="delete"
-              title="Delete task"
-              aria-label="Delete ${escapeHTML(task.title)}"
-            >
-              ×
-            </button>
+              <div
+                class="priority-bar priority-${task.priority}"
+                aria-hidden="true"
+              ></div>
 
-          </div>
 
-        </article>
+              <button
+                class="check ${
+                  task.completed
+                    ? "done"
+                    : ""
+                }"
+                data-action="toggle"
+                aria-label="${
+                  task.completed
+                    ? "Mark incomplete"
+                    : "Mark complete"
+                }"
+              >
+                ${
+                  task.completed
+                    ? "✓"
+                    : ""
+                }
+              </button>
 
-      `;
 
-    }).join("");
+              <div>
+
+                <div class="task-title">
+                  ${escapeHTML(
+                    task.title
+                  )}
+                </div>
+
+
+                <div class="task-meta">
+
+                  <span class="badge">
+                    ${escapeHTML(
+                      task.priority
+                    )} priority
+                  </span>
+
+                  <span class="badge">
+                    ${task.estimate || 25} min
+                  </span>
+
+                  ${
+                    task.project
+                      ? `
+                        <span class="badge project">
+                          ${escapeHTML(
+                            task.project
+                          )}
+                        </span>
+                      `
+                      : ""
+                  }
+
+                  ${
+                    due
+                      ? `
+                        <span
+                          class="badge ${
+                            due === "Overdue"
+                              ? "overdue"
+                              : ""
+                          }"
+                        >
+                          ${due}
+                        </span>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+
+                ${
+                  task.notes
+                    ? `
+                      <div class="task-note">
+                        ${escapeHTML(
+                          task.notes
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+              </div>
+
+
+              <div class="task-actions">
+
+                ${
+                  !task.completed
+                    ? `
+                      <button
+                        data-action="focus"
+                        title="Focus on this task"
+                        aria-label="Focus on ${escapeHTML(
+                          task.title
+                        )}"
+                      >
+                        ▶
+                      </button>
+                    `
+                    : ""
+                }
+
+
+                <button
+                  data-action="edit"
+                  title="Edit task"
+                  aria-label="Edit ${escapeHTML(
+                    task.title
+                  )}"
+                >
+                  ✎
+                </button>
+
+
+                <button
+                  data-action="delete"
+                  title="Delete task"
+                  aria-label="Delete ${escapeHTML(
+                    task.title
+                  )}"
+                >
+                  ×
+                </button>
+
+              </div>
+
+            </article>
+
+          `;
+
+        }
+      )
+      .join("");
 
 
   container
-    .querySelectorAll(".task-card")
-    .forEach(card => {
+    .querySelectorAll(
+      ".task-card"
+    )
+    .forEach(
+      card => {
 
-      card.addEventListener(
-        "dragstart",
-        e => {
+        card.addEventListener(
+          "dragstart",
+          event => {
 
-          e.dataTransfer.setData(
-            "text/plain",
-            card.dataset.id
-          );
-
-        }
-      );
-
-
-      card.addEventListener(
-        "dragover",
-        e => {
-          e.preventDefault();
-        }
-      );
-
-
-      card.addEventListener(
-        "drop",
-        e => {
-
-          handlers.reorder(
-            e.dataTransfer.getData(
-              "text/plain"
-            ),
-            card.dataset.id
-          );
-
-        }
-      );
-
-
-      card.addEventListener(
-        "click",
-        e => {
-
-          const action =
-            e.target
-              .closest("[data-action]")
-              ?.dataset.action;
-
-          if (action) {
-            handlers[action](
+            event.dataTransfer.setData(
+              "text/plain",
               card.dataset.id
             );
+
           }
+        );
 
-        }
-      );
 
-    });
+        card.addEventListener(
+          "dragover",
+          event => {
+
+            event.preventDefault();
+
+          }
+        );
+
+
+        card.addEventListener(
+          "drop",
+          event => {
+
+            handlers.reorder(
+              event.dataTransfer.getData(
+                "text/plain"
+              ),
+              card.dataset.id
+            );
+
+          }
+        );
+
+
+        card.addEventListener(
+          "click",
+          event => {
+
+            const action =
+              event.target
+                .closest(
+                  "[data-action]"
+                )
+                ?.dataset.action;
+
+
+            if (action) {
+
+              handlers[action](
+                card.dataset.id
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
 }
 
 
@@ -333,16 +381,17 @@ export function renderStats(state) {
     "#inboxCount"
   ).textContent =
     state.tasks.filter(
-      task =>
-        !task.dueAt &&
-        !task.completed
+      t =>
+        !t.dueAt &&
+        !t.completed
     ).length;
 
 
   const targetDone =
     state.tasks.filter(
-      task =>
-        task.completedDate === todayKey()
+      t =>
+        t.completedDate ===
+        todayKey()
     ).length;
 
 
@@ -400,6 +449,7 @@ export function renderStats(state) {
   document.querySelector(
     "#goalMessage"
   ).textContent =
+
     targetDone >= state.target
 
       ? "Target reached. Protect the rest of your attention."
@@ -437,55 +487,59 @@ export function renderAnalytics(state) {
     Math.max(
       1,
       ...days.map(
-        day => day.count
+        d => d.count
       )
     );
 
 
   chart.innerHTML =
-    days.map(day => `
+    days
+      .map(
+        d => `
 
-      <div class="bar-col">
+          <div class="bar-col">
 
-        <span>
-          ${day.count}
-        </span>
+            <span>
+              ${d.count}
+            </span>
 
-        <div
-          class="bar"
-          style="height:${Math.max(
-            3,
-            day.count / max * 180
-          )}px"
-        ></div>
+            <div
+              class="bar"
+              style="height:${Math.max(
+                3,
+                d.count / max * 180
+              )}px"
+            ></div>
 
-        <small>
-          ${day.label}
-        </small>
+            <small>
+              ${d.label}
+            </small>
 
-      </div>
+          </div>
 
-    `).join("");
+        `
+      )
+      .join("");
 
 
   const completed =
     state.tasks.filter(
-      task => task.completed
+      t => t.completed
     ).length;
 
 
   const highDone =
     state.tasks.filter(
-      task =>
-        task.priority === "high" &&
-        task.completed
+      t =>
+        t.priority === "high" &&
+        t.completed
     ).length;
 
 
   const highTotal =
     state.tasks.filter(
-      task =>
-        task.priority === "high"
+      t =>
+        t.priority === "high"
     ).length;
 
 
@@ -495,12 +549,13 @@ export function renderAnalytics(state) {
       ? Math.round(
           state.tasks
             .filter(
-              task => task.completed
+              t =>
+                t.completed
             )
             .reduce(
-              (sum, task) =>
-                sum +
-                (task.estimate || 25),
+              (a, t) =>
+                a +
+                (t.estimate || 25),
               0
             ) /
             completed
@@ -581,42 +636,44 @@ export function renderAnalytics(state) {
     "#priorityBreakdown"
   ).innerHTML =
 
-    priorities.map(
-      priority => {
+    priorities
+      .map(
+        p => {
 
-        const count =
-          state.tasks.filter(
-            task =>
-              task.priority === priority
-          ).length;
+          const count =
+            state.tasks.filter(
+              t =>
+                t.priority === p
+            ).length;
 
 
-        return `
+          return `
 
-          <div class="break-row">
+            <div class="break-row">
 
-            <span>
-              ${priority}
-            </span>
+              <span>
+                ${p}
+              </span>
 
-            <i>
+              <i>
 
-              <span
-                style="width:${count / total * 100}%"
-              ></span>
+                <span
+                  style="width:${count / total * 100}%"
+                ></span>
 
-            </i>
+              </i>
 
-            <b>
-              ${count}
-            </b>
+              <b>
+                ${count}
+              </b>
 
-          </div>
+            </div>
 
-        `;
+          `;
 
-      }
-    ).join("");
+        }
+      )
+      .join("");
 
 
   document.querySelector(
