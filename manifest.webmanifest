@@ -1,0 +1,9 @@
+{
+  "name": "FocusList — Plan less. Focus more.",
+  "short_name": "FocusList",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f3ef",
+  "theme_color": "#101318",
+  "description": "A distraction-free task, focus and productivity workspace."
+}

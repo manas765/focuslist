@@ -1,893 +1,821 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FocusList — a clear-headed task ledger</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --paper: #F7F4EE;
-    --paper-raised: #FFFFFF;
-    --ink: #21242B;
-    --ink-soft: #5C606A;
-    --ink-faint: #9A968C;
-    --line: #E4DECE;
-    --line-strong: #CFC6AF;
-    --focus: #3E5C76;
-    --focus-deep: #2C4459;
-    --focus-tint: #E9EEF3;
-    --high: #C1483B;
-    --high-tint: #F8E9E6;
-    --medium: #B8791F;
-    --medium-tint: #F7EEDC;
-    --low: #4E7A5B;
-    --low-tint: #E8F0EA;
-    --done: #A6A296;
-    --danger: #B23A2E;
-    --danger-tint: #FBEAE8;
-    --shadow-sm: 0 1px 2px rgba(33,36,43,0.04), 0 1px 1px rgba(33,36,43,0.03);
-    --shadow-md: 0 4px 14px rgba(33,36,43,0.07), 0 1px 3px rgba(33,36,43,0.05);
-    --shadow-lg: 0 14px 34px rgba(33,36,43,0.16), 0 3px 8px rgba(33,36,43,0.08);
-    --radius: 10px;
-    --radius-sm: 6px;
-    --serif: "Lora", Georgia, serif;
-    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color-scheme: light;
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  :root[data-theme="dark"] {
-    --paper: #1B1D22;
-    --paper-raised: #24272E;
-    --ink: #EDEBE4;
-    --ink-soft: #ABA79C;
-    --ink-faint: #726F66;
-    --line: #34373E;
-    --line-strong: #454852;
-    --focus: #7C9CB8;
-    --focus-deep: #A6C2D9;
-    --focus-tint: #29323B;
-    --high: #E08277;
-    --high-tint: #3A2825;
-    --medium: #DBA857;
-    --medium-tint: #372D1C;
-    --low: #85B695;
-    --low-tint: #223228;
-    --done: #6C6A63;
-    --danger: #E08277;
-    --danger-tint: #3A2522;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-    --shadow-md: 0 4px 14px rgba(0,0,0,0.32);
-    --shadow-lg: 0 14px 34px rgba(0,0,0,0.45);
-    color-scheme: dark;
-  }
-  *, *::before, *::after { box-sizing: inherit; }
-  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  html, body {
-    height: 100%;
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--sans);
-    transition: background 0.2s ease, color 0.2s ease;
-  }
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    background-image:
-      radial-gradient(circle at 100% 0%, rgba(62,92,118,0.06), transparent 45%),
-      radial-gradient(circle at 0% 100%, rgba(184,121,31,0.05), transparent 40%);
-    background-attachment: fixed;
-  }
-  ::selection { background: var(--focus-tint); color: var(--focus-deep); }
-  a, button, input, select { font-family: inherit; }
-  button { cursor: pointer; }
-  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  .shell {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 288px 1fr;
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 44px 28px 64px;
-    gap: 40px;
-  }
-  @media (max-width: 860px) {
-    .shell { grid-template-columns: 1fr; padding: 20px 14px 44px; gap: 18px; }
-  }
+  <meta
+    name="description"
+    content="FocusList is a distraction-free task and focus workspace with planning, focus sessions and productivity insights."
+  >
 
-  .sidebar { display: flex; flex-direction: column; gap: 24px; position: sticky; top: 24px; align-self: start; }
-  @media (max-width: 860px) { .sidebar { position: static; } }
+  <meta name="theme-color" content="#101318">
 
-  .brand-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .brand { display: flex; flex-direction: column; gap: 6px; }
-  .brand .mark { font-family: var(--serif); font-weight: 700; font-size: 1.85rem; letter-spacing: -0.015em; line-height: 1.05; }
-  .brand .mark .dot { color: var(--focus); }
-  .brand .today { font-size: 0.78rem; color: var(--ink-faint); font-style: italic; font-family: var(--serif); }
-  .brand .tag { font-size: 0.85rem; color: var(--ink-soft); max-width: 30ch; line-height: 1.5; margin-top: 2px; }
+  <title>FocusList — Plan less. Focus more.</title>
 
-  .theme-toggle {
-    all: unset;
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    background: var(--paper-raised);
-    box-shadow: var(--shadow-sm);
-    color: var(--ink-soft);
-    flex-shrink: 0;
-    transition: transform 0.2s ease, color 0.2s ease;
-  }
-  .theme-toggle:hover { color: var(--focus); transform: rotate(15deg); }
-  .theme-toggle svg.moon { display: none; }
-  :root[data-theme="dark"] .theme-toggle svg.sun { display: none; }
-  :root[data-theme="dark"] .theme-toggle svg.moon { display: block; }
-
-  .stats { background: var(--paper-raised); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-  .stat-cell { padding: 12px 8px 10px; border-radius: var(--radius-sm); text-align: center; }
-  .stat-value { font-family: var(--serif); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1; display: block; }
-  .stat-label { font-size: 0.68rem; color: var(--ink-faint); margin-top: 5px; display: block; }
-  .stat-cell.pending .stat-value { color: var(--focus-deep); }
-  .stat-cell.completed .stat-value { color: var(--low); }
-  .stats-progress { grid-column: 1 / -1; padding: 4px 10px 2px; display: flex; align-items: center; gap: 8px; }
-  .progress-track { height: 5px; background: var(--line); border-radius: 4px; overflow: hidden; flex: 1; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--focus), var(--low)); width: 0%; transition: width 0.4s ease; }
-  .progress-pct { font-size: 0.68rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; flex-shrink: 0; }
-
-  nav.filters { background: var(--paper-raised); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 16px; display: flex; flex-direction: column; gap: 18px; }
-  .filter-group h3 { margin: 0 0 9px; font-size: 0.72rem; color: var(--ink-faint); font-weight: 600; letter-spacing: 0.02em; }
-  .filter-list { display: flex; flex-direction: column; gap: 2px; }
-  .filter-btn { all: unset; padding: 7px 10px; font-size: 0.9rem; color: var(--ink-soft); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; transition: background 0.12s ease, color 0.12s ease; }
-  .filter-btn:hover { background: var(--paper); color: var(--ink); }
-  .filter-btn.active { color: #fff; font-weight: 600; background: var(--focus); }
-  .filter-btn .count { font-variant-numeric: tabular-nums; color: inherit; opacity: 0.65; font-weight: 400; font-size: 0.82rem; }
-
-  .priority-filters { display: flex; flex-wrap: wrap; gap: 7px; }
-  .flag-chip { all: unset; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px 6px 9px; border: 1px solid var(--line); border-radius: 20px; font-size: 0.8rem; color: var(--ink-soft); transition: all 0.12s ease; }
-  .flag-chip:hover { border-color: var(--line-strong); }
-  .flag-chip .swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .flag-chip[data-p="high"] .swatch { background: var(--high); }
-  .flag-chip[data-p="medium"] .swatch { background: var(--medium); }
-  .flag-chip[data-p="low"] .swatch { background: var(--low); }
-  .flag-chip.active { font-weight: 600; color: var(--ink); border-color: transparent; }
-  .flag-chip[data-p="high"].active { background: var(--high-tint); color: var(--high); }
-  .flag-chip[data-p="medium"].active { background: var(--medium-tint); color: var(--medium); }
-  .flag-chip[data-p="low"].active { background: var(--low-tint); color: var(--low); }
-  .flag-chip[data-p="all"].active { background: var(--focus-tint); color: var(--focus-deep); }
-
-  .clear-btn { all: unset; font-size: 0.8rem; color: var(--ink-faint); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; align-self: flex-start; }
-  .clear-btn:hover { color: var(--danger); }
-
-  .shortcut-hint { font-size: 0.7rem; color: var(--ink-faint); display: flex; gap: 10px; flex-wrap: wrap; padding: 0 2px; }
-  .shortcut-hint kbd { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-family: var(--sans); box-shadow: var(--shadow-sm); }
-
-  main { display: flex; flex-direction: column; min-width: 0; }
-
-  .composer { background: var(--paper-raised); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 14px; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
-  .composer-row { display: flex; gap: 10px; width: 100%; }
-  .composer input[type="text"] { flex: 1; min-width: 0; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); font-size: 0.95rem; color: var(--ink); transition: border-color 0.12s ease, background 0.12s ease; }
-  .composer input[type="text"]:focus-visible { outline: none; border-color: var(--focus); background: var(--paper-raised); }
-  .composer-options { display: flex; gap: 10px; width: 100%; flex-wrap: wrap; }
-
-  .priority-select { display: flex; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; border: 1.5px solid var(--line); }
-  .priority-select button { all: unset; padding: 9px 14px; font-size: 0.82rem; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--line); white-space: nowrap; transition: background 0.12s ease; }
-  .priority-select button:last-child { border-right: none; }
-  .priority-select button .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.55; }
-  .priority-select button[data-p="high"] { color: var(--high); }
-  .priority-select button[data-p="medium"] { color: var(--medium); }
-  .priority-select button[data-p="low"] { color: var(--low); }
-  .priority-select button.sel[data-p="high"] { background: var(--high-tint); font-weight: 600; }
-  .priority-select button.sel[data-p="medium"] { background: var(--medium-tint); font-weight: 600; }
-  .priority-select button.sel[data-p="low"] { background: var(--low-tint); font-weight: 600; }
-  .priority-select button.sel .dot { opacity: 1; }
-
-  .due-field { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 0 10px; color: var(--ink-soft); flex: 1; min-width: 180px; }
-  .due-field svg { flex-shrink: 0; opacity: 0.65; }
-  .due-field input[type="datetime-local"] { border: none; background: transparent; padding: 9px 0; font-size: 0.85rem; color: var(--ink); width: 100%; min-width: 0; color-scheme: inherit; }
-  .due-field input[type="datetime-local"]:focus-visible { outline: none; }
-  .due-clear { all: unset; color: var(--ink-faint); font-size: 0.75rem; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; }
-  .due-clear:hover { color: var(--danger); background: var(--danger-tint); }
-
-  .add-btn { all: unset; background: var(--focus); color: #fff; padding: 0 22px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, transform 0.08s ease; box-shadow: var(--shadow-sm); }
-  .add-btn:hover { background: var(--focus-deep); }
-  .add-btn:active { transform: translateY(1px); }
-  :root[data-theme="dark"] .add-btn { color: #1B1D22; }
-
-  @media (max-width: 560px) {
-    .composer-row { flex-wrap: wrap; }
-    .add-btn { width: 100%; padding: 12px 0; order: 3; }
-    .composer input[type="text"] { order: 1; width: 100%; }
-    .composer-options { order: 2; }
-    .due-field { width: 100%; }
-  }
-
-  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .search-wrap { position: relative; flex: 1; }
-  .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); pointer-events: none; }
-  .search-wrap input { width: 100%; padding: 9px 12px 9px 34px; border: 1.5px solid var(--line); border-radius: 20px; background: var(--paper-raised); font-size: 0.88rem; color: var(--ink); transition: border-color 0.12s ease; }
-  .search-wrap input:focus-visible { outline: none; border-color: var(--focus); }
-  .mobile-filter-toggle { display: none; all: unset; font-size: 0.82rem; font-weight: 600; color: var(--focus-deep); background: var(--focus-tint); padding: 9px 14px; border-radius: 20px; }
-  @media (max-width: 860px) { .mobile-filter-toggle { display: inline-flex; } }
-
-  .group-head { display: flex; align-items: center; gap: 8px; padding: 16px 4px 8px; }
-  .group-head:first-child { padding-top: 4px; }
-  .group-head h3 { margin: 0; font-family: var(--serif); font-size: 0.92rem; font-weight: 600; color: var(--ink-soft); }
-  .group-head.overdue h3 { color: var(--danger); }
-  .group-head .group-line { flex: 1; height: 1px; background: var(--line); }
-
-  .list-head { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 4px 10px; }
-  .list-head h2 { margin: 0; font-family: var(--serif); font-size: 1.1rem; font-weight: 600; }
-  .list-head .meta { font-size: 0.8rem; color: var(--ink-faint); }
-
-  ul.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-
-  .task { display: grid; grid-template-columns: 4px 24px 1fr auto; align-items: center; gap: 14px; padding: 14px 14px; background: var(--paper-raised); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); animation: rise 0.22s ease both; transition: box-shadow 0.15s ease, transform 0.1s ease, opacity 0.18s ease; }
-  .task:hover { box-shadow: var(--shadow-md); }
-  .task.completed { background: color-mix(in srgb, var(--paper-raised) 88%, var(--paper)); }
-  .task.removing { opacity: 0; transform: scale(0.97); }
-  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-  .flagbar { align-self: stretch; border-radius: 3px; }
-  .flagbar[data-p="high"] { background: var(--high); }
-  .flagbar[data-p="medium"] { background: var(--medium); }
-  .flagbar[data-p="low"] { background: var(--low); }
-  .task.completed .flagbar { opacity: 0.35; }
-
-  .check { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: var(--paper-raised); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; }
-  .check:hover { border-color: var(--focus); transform: scale(1.06); }
-  .check.done { background: var(--low); border-color: var(--low); }
-  .check svg { opacity: 0; transform: scale(0.6); transition: opacity 0.12s ease, transform 0.12s ease; }
-  .check.done svg { opacity: 1; transform: scale(1); }
-
-  .task-body { min-width: 0; }
-  .task-title { font-size: 0.96rem; line-height: 1.35; word-break: break-word; color: var(--ink); }
-  .task.completed .task-title { color: var(--done); text-decoration: line-through; text-decoration-color: var(--line-strong); }
-  .task-sub { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 4px; font-size: 0.74rem; color: var(--ink-faint); }
-  .prio-label { font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
-  .prio-label[data-p="high"] { color: var(--high); }
-  .prio-label[data-p="medium"] { color: var(--medium); }
-  .prio-label[data-p="low"] { color: var(--low); }
-
-  .due-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--paper); color: var(--ink-soft); font-weight: 500; }
-  .due-badge.overdue { background: var(--danger-tint); color: var(--danger); font-weight: 600; }
-  .due-badge svg { flex-shrink: 0; }
-
-  .edit-panel { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-  .edit-input { width: 100%; padding: 7px 9px; border: 1.5px solid var(--focus); border-radius: var(--radius-sm); font-size: 0.95rem; background: var(--focus-tint); color: var(--ink); }
-  .edit-due { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .edit-due input[type="datetime-local"] { border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-size: 0.78rem; background: var(--paper-raised); color: var(--ink); color-scheme: inherit; }
-  .edit-due button { all: unset; font-size: 0.72rem; color: var(--ink-faint); cursor: pointer; }
-  .edit-due button:hover { color: var(--danger); }
-
-  .task-actions { display: flex; gap: 3px; }
-  .icon-btn { all: unset; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); color: var(--ink-faint); transition: background 0.12s ease, color 0.12s ease; }
-  .icon-btn:hover { background: var(--focus-tint); color: var(--focus-deep); }
-  .icon-btn.delete:hover { background: var(--danger-tint); color: var(--danger); }
-  .icon-btn.save { color: var(--focus); }
-
-  .empty-state { padding: 64px 24px; text-align: center; color: var(--ink-faint); background: var(--paper-raised); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
-  .empty-state .glyph { font-family: var(--serif); font-size: 1.7rem; color: var(--ink-soft); margin-bottom: 6px; }
-  .empty-state p { margin: 4px 0 0; font-size: 0.88rem; max-width: 34ch; margin-inline: auto; }
-
-  footer { text-align: center; font-size: 0.75rem; color: var(--ink-faint); padding: 22px 0 8px; }
-
-  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-  /* Toast */
-  .toast-wrap { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: center; padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .toast { background: var(--ink); color: var(--paper); padding: 11px 12px 11px 18px; border-radius: 30px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 14px; font-size: 0.86rem; animation: toast-in 0.22s ease both; }
-  :root[data-theme="dark"] .toast { background: #EDEBE4; color: #1B1D22; }
-  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .toast button.undo { all: unset; font-weight: 700; color: #9FC6E6; padding: 4px 10px; border-radius: 16px; cursor: pointer; }
-  :root[data-theme="dark"] .toast button.undo { color: var(--focus-deep); }
-  .toast button.undo:hover { background: rgba(255,255,255,0.12); }
-
-  /* Confetti */
-  .confetti-piece { position: fixed; top: -10px; width: 8px; height: 14px; z-index: 60; pointer-events: none; border-radius: 2px; animation: confetti-fall linear forwards; }
-  @keyframes confetti-fall {
-    to { transform: translateY(110vh) rotate(540deg); opacity: 0.2; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
-  }
-
-  @media (max-width: 860px) {
-    .sidebar.collapsed .filters, .sidebar.collapsed .stats, .sidebar.collapsed .shortcut-hint { display: none; }
-  }
-</style>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
 </head>
+
 <body>
 
-<div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="brand-row">
-      <div class="brand">
-        <div class="mark">Focus<span class="dot">·</span>List</div>
-        <div class="today" id="today-label"></div>
-        <div class="tag">One page for what needs doing today. Nothing else on it.</div>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="Primary navigation">
+
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">F</div>
+
+      <div>
+        <strong>FocusList</strong>
+        <span>Plan less. Focus more.</span>
       </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" type="button">
-        <svg class="sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg class="moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
+    </div>
+
+    <nav class="nav-list">
+
+      <button class="nav-item active" data-view="today" aria-current="page">
+        <span>Today</span>
+        <kbd>1</kbd>
       </button>
-    </div>
 
-    <div class="stats" role="status" aria-label="Task statistics">
-      <div class="stat-cell"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total</span></div>
-      <div class="stat-cell pending"><span class="stat-value" id="stat-pending">0</span><span class="stat-label">Pending</span></div>
-      <div class="stat-cell completed"><span class="stat-value" id="stat-completed">0</span><span class="stat-label">Done</span></div>
-      <div class="stats-progress">
-        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-        <span class="progress-pct" id="progress-pct">0%</span>
-      </div>
-    </div>
+      <button class="nav-item" data-view="inbox">
+        <span>Inbox</span>
+        <b id="inboxCount">0</b>
+      </button>
 
-    <nav class="filters">
-      <div class="filter-group">
-        <h3>Status</h3>
-        <div class="filter-list" id="status-filters">
-          <button class="filter-btn active" data-status="all">All <span class="count" id="count-all">0</span></button>
-          <button class="filter-btn" data-status="active">Active <span class="count" id="count-active">0</span></button>
-          <button class="filter-btn" data-status="completed">Completed <span class="count" id="count-completed">0</span></button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <h3>Priority</h3>
-        <div class="priority-filters" id="priority-filters">
-          <button class="flag-chip active" data-p="all">All</button>
-          <button class="flag-chip" data-p="high"><span class="swatch"></span>High</button>
-          <button class="flag-chip" data-p="medium"><span class="swatch"></span>Medium</button>
-          <button class="flag-chip" data-p="low"><span class="swatch"></span>Low</button>
-        </div>
-      </div>
-      <button class="clear-btn" id="clear-completed">Clear completed tasks</button>
+      <button class="nav-item" data-view="focus">
+        <span>Focus mode</span>
+        <kbd>F</kbd>
+      </button>
+
+      <button class="nav-item" data-view="analytics">
+        <span>Insights</span>
+        <kbd>4</kbd>
+      </button>
+
     </nav>
 
-    <div class="shortcut-hint"><span><kbd>/</kbd> search</span><span><kbd>n</kbd> new task</span></div>
+    <div class="sidebar-section">
+
+      <div class="section-label">Views</div>
+
+      <button class="filter-link" data-filter="all">
+        All tasks
+      </button>
+
+      <button class="filter-link" data-filter="active">
+        Open
+      </button>
+
+      <button class="filter-link" data-filter="completed">
+        Completed
+      </button>
+
+      <button class="filter-link" data-filter="high">
+        High priority
+      </button>
+
+    </div>
+
+    <div class="sidebar-bottom">
+
+      <div class="mini-card">
+
+        <span class="mini-label">Daily target</span>
+
+        <strong>
+          <span id="dailyTargetValue">3</span> tasks
+        </strong>
+
+        <div class="progress-track">
+          <span id="dailyTargetBar"></span>
+        </div>
+
+        <small id="dailyTargetText">
+          0 / 3 completed
+        </small>
+
+      </div>
+
+      <button
+        class="theme-button"
+        id="themeToggle"
+        type="button"
+        aria-label="Toggle theme"
+      >
+        <span id="themeIcon">☾</span>
+        <span>Theme</span>
+      </button>
+
+    </div>
+
   </aside>
 
-  <main>
-    <form class="composer" id="composer" autocomplete="off">
-      <div class="composer-row">
-        <label for="new-task" class="sr-only">New task title</label>
-        <input type="text" id="new-task" placeholder="What needs doing?" maxlength="140" />
-        <button type="submit" class="add-btn">Add task</button>
+
+  <!-- MAIN -->
+  <main id="main" class="main">
+
+    <header class="topbar">
+
+      <div>
+
+        <p class="eyebrow" id="viewEyebrow">
+          TODAY
+        </p>
+
+        <h1 id="viewTitle">
+          A clear-headed task desk.
+        </h1>
+
+        <p class="subtext" id="viewSubtitle">
+          Everything important, without the noise.
+        </p>
+
       </div>
-      <div class="composer-options">
-        <div class="priority-select" id="new-priority" role="group" aria-label="Priority for new task">
-          <button type="button" data-p="low"><span class="dot"></span>Low</button>
-          <button type="button" data-p="medium" class="sel"><span class="dot"></span>Medium</button>
-          <button type="button" data-p="high"><span class="dot"></span>High</button>
+
+      <div class="top-actions">
+
+        <button
+          class="icon-button"
+          id="commandButton"
+          title="Command palette (Ctrl/Cmd + K)"
+          aria-label="Open command palette"
+        >
+          ⌘K
+        </button>
+
+        <button
+          class="primary-button"
+          id="focusHeaderButton"
+        >
+          Start focus
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- TODAY -->
+    <section id="dashboardView" class="view">
+
+      <div class="stat-grid">
+
+        <article class="stat-card">
+          <span>Today</span>
+          <strong id="statToday">0%</strong>
+          <small>completion</small>
+        </article>
+
+        <article class="stat-card">
+          <span>Open</span>
+          <strong id="statOpen">0</strong>
+          <small>tasks remaining</small>
+        </article>
+
+        <article class="stat-card">
+          <span>Focus</span>
+          <strong id="statFocus">0m</strong>
+          <small>this week</small>
+        </article>
+
+        <article class="stat-card">
+          <span>Streak</span>
+          <strong id="statStreak">0</strong>
+          <small>productive days</small>
+        </article>
+
+      </div>
+
+
+      <div class="workspace-grid">
+
+        <!-- TASK COMPOSER -->
+        <section class="panel composer-panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">CAPTURE</span>
+
+              <h2>Add a task</h2>
+            </div>
+
+            <button
+              class="text-button"
+              id="clearCompleted"
+            >
+              Clear completed
+            </button>
+
+          </div>
+
+
+          <form id="taskForm" class="composer">
+
+            <label
+              class="sr-only"
+              for="taskTitle"
+            >
+              Task title
+            </label>
+
+            <input
+              id="taskTitle"
+              name="title"
+              autocomplete="off"
+              maxlength="140"
+              placeholder="What needs your attention?"
+              required
+            >
+
+
+            <div class="composer-row">
+
+              <select
+                id="taskPriority"
+                aria-label="Priority"
+              >
+                <option value="low">
+                  Low priority
+                </option>
+
+                <option
+                  value="medium"
+                  selected
+                >
+                  Medium priority
+                </option>
+
+                <option value="high">
+                  High priority
+                </option>
+              </select>
+
+
+              <input
+                id="taskDue"
+                type="date"
+                aria-label="Due date"
+              >
+
+
+              <input
+                id="taskEstimate"
+                type="number"
+                min="5"
+                max="480"
+                step="5"
+                value="25"
+                aria-label="Estimated minutes"
+                title="Estimated minutes"
+              >
+
+
+              <input
+                id="taskProject"
+                maxlength="24"
+                placeholder="Project / tag"
+                aria-label="Project or tag"
+              >
+
+
+              <button
+                class="primary-button"
+                type="submit"
+              >
+                Add task <span>↵</span>
+              </button>
+
+            </div>
+
+
+            <textarea
+              id="taskNotes"
+              rows="2"
+              maxlength="500"
+              placeholder="Optional note — context, next step, or definition of done"
+            ></textarea>
+
+          </form>
+
+        </section>
+
+
+        <!-- DAILY TARGET -->
+        <section class="panel goal-panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">DAILY PLAN</span>
+
+              <h2>Make today count</h2>
+            </div>
+
+            <button
+              class="text-button"
+              id="editTarget"
+            >
+              Set target
+            </button>
+
+          </div>
+
+
+          <div
+            class="goal-ring"
+            id="goalRing"
+            role="img"
+            aria-label="Daily completion progress"
+          >
+
+            <div>
+              <strong id="goalPercent">0%</strong>
+              <span>done</span>
+            </div>
+
+          </div>
+
+
+          <p id="goalMessage">
+            Choose a few important tasks and finish them before adding more.
+          </p>
+
+        </section>
+
+      </div>
+
+
+      <!-- TASK LIST -->
+      <section class="task-section">
+
+        <div class="toolbar">
+
+          <div class="search-wrap">
+
+            <span aria-hidden="true">
+              ⌕
+            </span>
+
+            <label
+              class="sr-only"
+              for="searchInput"
+            >
+              Search tasks
+            </label>
+
+            <input
+              id="searchInput"
+              placeholder="Search tasks, projects, notes…"
+            >
+
+            <kbd>/</kbd>
+
+          </div>
+
+
+          <div class="toolbar-actions">
+
+            <select
+              id="sortSelect"
+              aria-label="Sort tasks"
+            >
+
+              <option value="smart">
+                Smart order
+              </option>
+
+              <option value="due">
+                Due date
+              </option>
+
+              <option value="priority">
+                Priority
+              </option>
+
+              <option value="created">
+                Recently added
+              </option>
+
+            </select>
+
+
+            <select
+              id="statusSelect"
+              aria-label="Filter status"
+            >
+
+              <option value="all">
+                All
+              </option>
+
+              <option value="active">
+                Open
+              </option>
+
+              <option value="completed">
+                Completed
+              </option>
+
+              <option value="high">
+                High priority
+              </option>
+
+            </select>
+
+          </div>
+
         </div>
-        <div class="due-field">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-          <label for="new-due" class="sr-only">Due date and time</label>
-          <input type="datetime-local" id="new-due" />
-          <button type="button" class="due-clear" id="new-due-clear" title="Clear due date">Clear</button>
+
+
+        <div
+          id="taskList"
+          class="task-list"
+          aria-live="polite"
+        ></div>
+
+      </section>
+
+    </section>
+
+
+    <!-- FOCUS MODE -->
+    <section
+      id="focusView"
+      class="view hidden"
+    >
+
+      <div class="focus-layout">
+
+        <section class="panel focus-panel">
+
+          <span class="eyebrow">
+            DEEP WORK
+          </span>
+
+          <h2 id="focusTaskName">
+            Pick a task to begin.
+          </h2>
+
+          <p id="focusTaskMeta">
+            A focused session turns an intention into measurable progress.
+          </p>
+
+
+          <div
+            class="timer"
+            id="timerDisplay"
+            aria-live="polite"
+          >
+            25:00
+          </div>
+
+
+          <div class="timer-controls">
+
+            <button
+              class="primary-button large"
+              id="timerStart"
+            >
+              Start session
+            </button>
+
+            <button
+              class="secondary-button large"
+              id="timerReset"
+            >
+              Reset
+            </button>
+
+          </div>
+
+
+          <div class="timer-options">
+
+            <button data-minutes="15">
+              15 min
+            </button>
+
+            <button
+              class="selected"
+              data-minutes="25"
+            >
+              25 min
+            </button>
+
+            <button data-minutes="45">
+              45 min
+            </button>
+
+          </div>
+
+
+          <div class="focus-note">
+            Tip: hide distractions, work until the timer ends, then log the session.
+          </div>
+
+        </section>
+
+
+        <aside class="panel queue-panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">
+                UP NEXT
+              </span>
+
+              <h2>
+                Focus queue
+              </h2>
+            </div>
+
+          </div>
+
+          <div id="focusQueue"></div>
+
+        </aside>
+
+      </div>
+
+    </section>
+
+
+    <!-- ANALYTICS -->
+    <section
+      id="analyticsView"
+      class="view hidden"
+    >
+
+      <div class="analytics-grid">
+
+        <section class="panel chart-panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">
+                LAST 7 DAYS
+              </span>
+
+              <h2>
+                Completion rhythm
+              </h2>
+            </div>
+
+          </div>
+
+          <div
+            id="completionChart"
+            class="bar-chart"
+            aria-label="Task completion chart"
+          ></div>
+
+        </section>
+
+
+        <section class="panel insight-panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">
+                INSIGHTS
+              </span>
+
+              <h2>
+                Your work pattern
+              </h2>
+            </div>
+
+          </div>
+
+          <div id="insightList"></div>
+
+        </section>
+
+      </div>
+
+
+      <div class="analytics-grid lower">
+
+        <section class="panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">
+                TASK MIX
+              </span>
+
+              <h2>
+                By priority
+              </h2>
+            </div>
+
+          </div>
+
+          <div
+            id="priorityBreakdown"
+            class="breakdown"
+          ></div>
+
+        </section>
+
+
+        <section class="panel">
+
+          <div class="panel-heading">
+
+            <div>
+              <span class="eyebrow">
+                FOCUS TIME
+              </span>
+
+              <h2>
+                Minutes logged
+              </h2>
+            </div>
+
+          </div>
+
+          <div class="big-metric">
+
+            <strong id="weeklyFocusMetric">
+              0
+            </strong>
+
+            <span>
+              minutes this week
+            </span>
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </section>
+
+
+    <!-- INBOX -->
+    <section
+      id="inboxView"
+      class="view hidden"
+    >
+
+      <div class="panel inbox-panel">
+
+        <div class="panel-heading">
+
+          <div>
+
+            <span class="eyebrow">
+              INBOX
+            </span>
+
+            <h2>
+              Everything you haven't scheduled yet.
+            </h2>
+
+          </div>
+
+          <button
+            class="secondary-button"
+            id="backToToday"
+          >
+            Back to today
+          </button>
+
         </div>
+
+        <div id="inboxList"></div>
+
       </div>
-    </form>
 
-    <div class="toolbar">
-      <div class="search-wrap">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <label for="search" class="sr-only">Search tasks</label>
-        <input type="text" id="search" placeholder="Search tasks…" />
-      </div>
-      <button class="mobile-filter-toggle" id="mobile-filter-toggle" aria-expanded="false">Filters</button>
-    </div>
+    </section>
 
-    <div class="list-head">
-      <h2 id="list-title">All tasks</h2>
-      <span class="meta" id="list-meta">0 shown</span>
-    </div>
 
-    <div id="list-container"></div>
+    <footer class="footer">
 
-    <footer>Stored privately in this browser · nothing leaves your device</footer>
+      <span>
+        FocusList • local-first productivity workspace
+      </span>
+
+      <span>
+        <kbd>N</kbd> new task ·
+        <kbd>F</kbd> focus ·
+        <kbd>⌘K</kbd> commands
+      </span>
+
+    </footer>
+
   </main>
+
 </div>
 
-<div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+<!-- COMMAND PALETTE -->
+<dialog
+  id="commandDialog"
+  class="command-dialog"
+>
+
+  <div class="command-head">
+
+    <input
+      id="commandInput"
+      placeholder="Type a command…"
+      autocomplete="off"
+      aria-label="Command search"
+    >
+
+    <button
+      id="commandClose"
+      class="icon-button"
+      aria-label="Close command palette"
+    >
+      Esc
+    </button>
+
+  </div>
+
+  <div id="commandList"></div>
+
+</dialog>
+
+
+<!-- DAILY TARGET DIALOG -->
+<dialog
+  id="targetDialog"
+  class="small-dialog"
+>
+
+  <form method="dialog">
+
+    <span class="eyebrow">
+      DAILY TARGET
+    </span>
+
+    <h2>
+      How many tasks matter today?
+    </h2>
+
+    <input
+      id="targetInput"
+      type="number"
+      min="1"
+      max="20"
+      value="3"
+      aria-label="Daily task target"
+    >
+
+    <div class="dialog-actions">
+
+      <button
+        class="secondary-button"
+        value="cancel"
+      >
+        Cancel
+      </button>
+
+      <button
+        class="primary-button"
+        id="saveTarget"
+        value="default"
+      >
+        Save target
+      </button>
+
+    </div>
+
+  </form>
+
+</dialog>
+
+
+<div
+  id="toast"
+  class="toast"
+  role="status"
+></div>
+
+
+<script type="module" src="js/app.js"></script>
 
 <script>
-(function () {
-  "use strict";
-
-  var STORAGE_KEY = "focuslist.tasks.v2";
-  var THEME_KEY = "focuslist.theme";
-  var uid = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); };
-
-  var tasks = [];
-  var state = { status: "all", priority: "all", search: "", editingId: null };
-  var newTaskPriority = "medium";
-  var lastPendingCount = null;
-
-  function migrateOldData() {
-    try {
-      var oldRaw = localStorage.getItem("focuslist.tasks.v1");
-      if (oldRaw && !localStorage.getItem(STORAGE_KEY)) {
-        var old = JSON.parse(oldRaw);
-        old.forEach(function (t) { t.dueAt = t.dueAt || null; });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(old));
-      }
-    } catch (e) { /* ignore */ }
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch(() => {});
   }
-
-  function load() {
-    migrateOldData();
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) tasks = JSON.parse(raw);
-    } catch (e) { tasks = []; }
-  }
-  function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } catch (e) { /* storage unavailable */ }
-  }
-
-  // ---------- theme ----------
-  function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
-  }
-  function initTheme() {
-    var saved = null;
-    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
-    if (saved) { applyTheme(saved); return; }
-    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(prefersDark ? "dark" : "light");
-  }
-
-  var $ = function (sel) { return document.querySelector(sel); };
-  var listContainer = $("#list-container");
-  var composer = $("#composer");
-  var newTaskInput = $("#new-task");
-  var newPriorityGroup = $("#new-priority");
-  var newDueInput = $("#new-due");
-  var newDueClear = $("#new-due-clear");
-  var searchInput = $("#search");
-  var statusFilters = $("#status-filters");
-  var priorityFilters = $("#priority-filters");
-  var clearCompletedBtn = $("#clear-completed");
-  var sidebar = $("#sidebar");
-  var mobileToggle = $("#mobile-filter-toggle");
-  var todayLabel = $("#today-label");
-  var themeToggle = $("#theme-toggle");
-  var toastWrap = $("#toast-wrap");
-
-  var iconCheck = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-  var iconEdit = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>';
-  var iconTrash = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>';
-  var iconSave = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-  var iconClock = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
-
-  var PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
-
-  function setTodayLabel() {
-    var opts = { weekday: "long", month: "long", day: "numeric" };
-    todayLabel.textContent = new Date().toLocaleDateString(undefined, opts);
-  }
-
-  function counts() {
-    var total = tasks.length, completed = 0;
-    for (var i = 0; i < tasks.length; i++) if (tasks[i].completed) completed++;
-    return { total: total, completed: completed, pending: total - completed };
-  }
-
-  function visibleTasks() {
-    var q = state.search.trim().toLowerCase();
-    return tasks
-      .filter(function (t) {
-        if (state.status === "active" && t.completed) return false;
-        if (state.status === "completed" && !t.completed) return false;
-        if (state.priority !== "all" && t.priority !== state.priority) return false;
-        if (q && t.title.toLowerCase().indexOf(q) === -1) return false;
-        return true;
-      })
-      .sort(function (a, b) {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        if (a.priority !== b.priority) return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-        var aDue = a.dueAt || Infinity, bDue = b.dueAt || Infinity;
-        if (aDue !== bDue) return aDue - bDue;
-        return b.createdAt - a.createdAt;
-      });
-  }
-
-  function dueGroupOf(t) {
-    if (t.completed || !t.dueAt) return "none";
-    var now = new Date();
-    var due = new Date(t.dueAt);
-    if (t.dueAt < now.getTime()) return "overdue";
-    var startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
-    if (t.dueAt < startOfTomorrow) return "today";
-    return "upcoming";
-  }
-
-  var GROUP_META = {
-    overdue: { label: "Overdue", order: 0 },
-    today: { label: "Due Today", order: 1 },
-    upcoming: { label: "Upcoming", order: 2 },
-    none: { label: "No Due Date", order: 3 }
-  };
-
-  function formatDue(ts) {
-    var d = new Date(ts);
-    var now = new Date();
-    var sameYear = d.getFullYear() === now.getFullYear();
-    var dateOpts = sameYear ? { month: "short", day: "numeric" } : { month: "short", day: "numeric", year: "numeric" };
-    var dateStr = d.toLocaleDateString(undefined, dateOpts);
-    var timeStr = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-    return dateStr + " · " + timeStr;
-  }
-
-  function toLocalInputValue(ts) {
-    var d = new Date(ts);
-    var pad = function (n) { return String(n).padStart(2, "0"); };
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
-
-  function updateTabTitle(c) {
-    document.title = (c.pending > 0 ? "(" + c.pending + ") " : "") + "FocusList";
-  }
-
-  function render() {
-    var c = counts();
-    $("#stat-total").textContent = c.total;
-    $("#stat-pending").textContent = c.pending;
-    $("#stat-completed").textContent = c.completed;
-    var pct = c.total ? Math.round((c.completed / c.total) * 100) : 0;
-    $("#progress-fill").style.width = pct + "%";
-    $("#progress-pct").textContent = pct + "%";
-    updateTabTitle(c);
-
-    $("#count-all").textContent = c.total;
-    $("#count-active").textContent = c.pending;
-    $("#count-completed").textContent = c.completed;
-
-    var shown = visibleTasks();
-    var titleMap = { all: "All tasks", active: "Active tasks", completed: "Completed tasks" };
-    $("#list-title").textContent = titleMap[state.status];
-    $("#list-meta").textContent = shown.length + " shown";
-
-    listContainer.innerHTML = "";
-
-    if (shown.length === 0) {
-      var empty = document.createElement("div");
-      empty.className = "empty-state";
-      var glyphText = tasks.length === 0 ? "A blank page" : "No matches";
-      var bodyText = tasks.length === 0 ? "Add your first task above to start the list." : "Nothing fits the current search and filters. Try clearing one.";
-      empty.innerHTML = '<div class="glyph">' + glyphText + '</div><p>' + bodyText + '</p>';
-      listContainer.appendChild(empty);
-      celebrateCheck(c);
-      return;
-    }
-
-    var showGroups = state.status !== "completed" && !state.search.trim();
-    if (!showGroups) {
-      var ul = document.createElement("ul");
-      ul.className = "tasks";
-      ul.setAttribute("aria-live", "polite");
-      shown.forEach(function (t) { ul.appendChild(renderTask(t)); });
-      listContainer.appendChild(ul);
-    } else {
-      var buckets = {};
-      shown.forEach(function (t) {
-        var g = dueGroupOf(t);
-        (buckets[g] = buckets[g] || []).push(t);
-      });
-      var groupKeys = Object.keys(buckets).sort(function (a, b) { return GROUP_META[a].order - GROUP_META[b].order; });
-      if (groupKeys.length === 1) {
-        var ul2 = document.createElement("ul");
-        ul2.className = "tasks";
-        ul2.setAttribute("aria-live", "polite");
-        buckets[groupKeys[0]].forEach(function (t) { ul2.appendChild(renderTask(t)); });
-        listContainer.appendChild(ul2);
-      } else {
-        groupKeys.forEach(function (g) {
-          var head = document.createElement("div");
-          head.className = "group-head" + (g === "overdue" ? " overdue" : "");
-          head.innerHTML = "<h3>" + GROUP_META[g].label + "</h3><div class=\"group-line\"></div>";
-          listContainer.appendChild(head);
-          var ul3 = document.createElement("ul");
-          ul3.className = "tasks";
-          buckets[g].forEach(function (t) { ul3.appendChild(renderTask(t)); });
-          listContainer.appendChild(ul3);
-        });
-      }
-    }
-
-    celebrateCheck(c);
-  }
-
-  function renderTask(t) {
-    var li = document.createElement("li");
-    li.className = "task" + (t.completed ? " completed" : "");
-    li.dataset.id = t.id;
-
-    var flag = document.createElement("div");
-    flag.className = "flagbar";
-    flag.dataset.p = t.priority;
-    li.appendChild(flag);
-
-    var check = document.createElement("button");
-    check.className = "check" + (t.completed ? " done" : "");
-    check.type = "button";
-    check.setAttribute("aria-label", t.completed ? "Mark as not completed" : "Mark as completed");
-    check.innerHTML = iconCheck;
-    check.addEventListener("click", function () { toggleComplete(t.id); });
-    li.appendChild(check);
-
-    var body = document.createElement("div");
-    body.className = "task-body";
-
-    if (state.editingId === t.id) {
-      var panel = document.createElement("div");
-      panel.className = "edit-panel";
-      var input = document.createElement("input");
-      input.type = "text";
-      input.className = "edit-input";
-      input.value = t.title;
-      input.maxLength = 140;
-      panel.appendChild(input);
-
-      var dueRow = document.createElement("div");
-      dueRow.className = "edit-due";
-      var dueInput = document.createElement("input");
-      dueInput.type = "datetime-local";
-      if (t.dueAt) dueInput.value = toLocalInputValue(t.dueAt);
-      dueRow.appendChild(dueInput);
-      var dueClearBtn = document.createElement("button");
-      dueClearBtn.type = "button";
-      dueClearBtn.textContent = "Clear due";
-      dueClearBtn.addEventListener("click", function () { dueInput.value = ""; });
-      dueRow.appendChild(dueClearBtn);
-      panel.appendChild(dueRow);
-
-      body.appendChild(panel);
-      setTimeout(function () { input.focus(); input.select(); }, 0);
-      input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") commitEdit(t.id, input.value, dueInput.value);
-        if (e.key === "Escape") { state.editingId = null; render(); }
-      });
-    } else {
-      var title = document.createElement("div");
-      title.className = "task-title";
-      title.textContent = t.title;
-      body.appendChild(title);
-
-      var sub = document.createElement("div");
-      sub.className = "task-sub";
-      var pl = document.createElement("span");
-      pl.className = "prio-label";
-      pl.dataset.p = t.priority;
-      pl.textContent = t.priority.charAt(0).toUpperCase() + t.priority.slice(1);
-      sub.appendChild(pl);
-
-      if (t.dueAt) {
-        var overdue = !t.completed && t.dueAt < Date.now();
-        var badge = document.createElement("span");
-        badge.className = "due-badge" + (overdue ? " overdue" : "");
-        badge.innerHTML = iconClock + " " + (overdue ? "Overdue · " : "") + formatDue(t.dueAt);
-        sub.appendChild(badge);
-      }
-      body.appendChild(sub);
-    }
-    li.appendChild(body);
-
-    var actions = document.createElement("div");
-    actions.className = "task-actions";
-
-    if (state.editingId === t.id) {
-      var saveBtn = document.createElement("button");
-      saveBtn.className = "icon-btn save";
-      saveBtn.type = "button";
-      saveBtn.setAttribute("aria-label", "Save task");
-      saveBtn.innerHTML = iconSave;
-      saveBtn.addEventListener("click", function () {
-        var input = li.querySelector(".edit-input");
-        var dueInput = li.querySelector(".edit-due input");
-        commitEdit(t.id, input ? input.value : t.title, dueInput ? dueInput.value : "");
-      });
-      actions.appendChild(saveBtn);
-    } else {
-      var editBtn = document.createElement("button");
-      editBtn.className = "icon-btn";
-      editBtn.type = "button";
-      editBtn.setAttribute("aria-label", "Edit task");
-      editBtn.innerHTML = iconEdit;
-      editBtn.addEventListener("click", function () { state.editingId = t.id; render(); });
-      actions.appendChild(editBtn);
-    }
-
-    var delBtn = document.createElement("button");
-    delBtn.className = "icon-btn delete";
-    delBtn.type = "button";
-    delBtn.setAttribute("aria-label", "Delete task");
-    delBtn.innerHTML = iconTrash;
-    delBtn.addEventListener("click", function () { requestDelete(t.id, li); });
-    actions.appendChild(delBtn);
-
-    li.appendChild(actions);
-    return li;
-  }
-
-  // ---------- toast / undo ----------
-  function showToast(message, onUndo) {
-    var toast = document.createElement("div");
-    toast.className = "toast";
-    var msg = document.createElement("span");
-    msg.textContent = message;
-    toast.appendChild(msg);
-    if (onUndo) {
-      var btn = document.createElement("button");
-      btn.className = "undo";
-      btn.type = "button";
-      btn.textContent = "Undo";
-      btn.addEventListener("click", function () {
-        onUndo();
-        toast.remove();
-      });
-      toast.appendChild(btn);
-    }
-    toastWrap.appendChild(toast);
-    setTimeout(function () {
-      toast.style.transition = "opacity 0.2s ease";
-      toast.style.opacity = "0";
-      setTimeout(function () { toast.remove(); }, 200);
-    }, 4500);
-  }
-
-  function requestDelete(id, li) {
-    var idx = tasks.findIndex(function (x) { return x.id === id; });
-    if (idx === -1) return;
-    var removed = tasks[idx];
-    var removedIdx = idx;
-    if (li) li.classList.add("removing");
-    setTimeout(function () {
-      tasks = tasks.filter(function (x) { return x.id !== id; });
-      if (state.editingId === id) state.editingId = null;
-      save();
-      render();
-      showToast("Task deleted", function () {
-        tasks.splice(Math.min(removedIdx, tasks.length), 0, removed);
-        save();
-        render();
-      });
-    }, li ? 160 : 0);
-  }
-
-  // ---------- confetti ----------
-  var confettiColors = ["#3E5C76", "#C1483B", "#B8791F", "#4E7A5B"];
-  function fireConfetti() {
-    for (var i = 0; i < 26; i++) {
-      var piece = document.createElement("div");
-      piece.className = "confetti-piece";
-      piece.style.left = Math.random() * 100 + "vw";
-      piece.style.background = confettiColors[i % confettiColors.length];
-      piece.style.animationDuration = (1.6 + Math.random() * 1.2) + "s";
-      piece.style.opacity = String(0.7 + Math.random() * 0.3);
-      document.body.appendChild(piece);
-      (function (p) { setTimeout(function () { p.remove(); }, 3200); })(piece);
-    }
-  }
-  function celebrateCheck(c) {
-    if (lastPendingCount !== null && lastPendingCount > 0 && c.pending === 0 && c.total > 0) {
-      fireConfetti();
-    }
-    lastPendingCount = c.pending;
-  }
-
-  // ---------- mutations ----------
-  function addTask(title, priority, dueValue) {
-    title = title.trim();
-    if (!title) return;
-    var dueAt = dueValue ? new Date(dueValue).getTime() : null;
-    tasks.unshift({ id: uid(), title: title, priority: priority, completed: false, createdAt: Date.now(), dueAt: dueAt });
-    save();
-    render();
-  }
-
-  function toggleComplete(id) {
-    var t = tasks.find(function (x) { return x.id === id; });
-    if (!t) return;
-    t.completed = !t.completed;
-    save();
-    render();
-  }
-
-  function commitEdit(id, newTitle, newDueValue) {
-    var t = tasks.find(function (x) { return x.id === id; });
-    if (t) {
-      var trimmed = (newTitle || "").trim();
-      if (trimmed) t.title = trimmed;
-      t.dueAt = newDueValue ? new Date(newDueValue).getTime() : null;
-    }
-    state.editingId = null;
-    save();
-    render();
-  }
-
-  function clearCompleted() {
-    var removedCount = tasks.filter(function (t) { return t.completed; }).length;
-    if (removedCount === 0) return;
-    tasks = tasks.filter(function (t) { return !t.completed; });
-    save();
-    render();
-    showToast(removedCount + (removedCount === 1 ? " task" : " tasks") + " cleared");
-  }
-
-  // ---------- events ----------
-  composer.addEventListener("submit", function (e) {
-    e.preventDefault();
-    addTask(newTaskInput.value, newTaskPriority, newDueInput.value);
-    newTaskInput.value = "";
-    newDueInput.value = "";
-    newTaskInput.focus();
-  });
-
-  newPriorityGroup.addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-p]");
-    if (!btn) return;
-    newTaskPriority = btn.dataset.p;
-    Array.prototype.forEach.call(newPriorityGroup.querySelectorAll("button"), function (b) { b.classList.toggle("sel", b === btn); });
-  });
-
-  newDueClear.addEventListener("click", function () { newDueInput.value = ""; });
-
-  searchInput.addEventListener("input", function () { state.search = searchInput.value; render(); });
-
-  statusFilters.addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-status]");
-    if (!btn) return;
-    state.status = btn.dataset.status;
-    Array.prototype.forEach.call(statusFilters.querySelectorAll(".filter-btn"), function (b) { b.classList.toggle("active", b === btn); });
-    render();
-  });
-
-  priorityFilters.addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-p]");
-    if (!btn) return;
-    state.priority = btn.dataset.p;
-    Array.prototype.forEach.call(priorityFilters.querySelectorAll(".flag-chip"), function (b) { b.classList.toggle("active", b === btn); });
-    render();
-  });
-
-  clearCompletedBtn.addEventListener("click", clearCompleted);
-
-  mobileToggle.addEventListener("click", function () {
-    var collapsed = sidebar.classList.toggle("collapsed");
-    mobileToggle.setAttribute("aria-expanded", String(!collapsed));
-  });
-
-  themeToggle.addEventListener("click", function () {
-    var current = document.documentElement.getAttribute("data-theme");
-    applyTheme(current === "dark" ? "light" : "dark");
-  });
-
-  document.addEventListener("keydown", function (e) {
-    var tag = (e.target && e.target.tagName || "").toLowerCase();
-    var typing = tag === "input" || tag === "textarea";
-    if (e.key === "/" && !typing) { e.preventDefault(); searchInput.focus(); }
-    if (e.key.toLowerCase() === "n" && !typing) { e.preventDefault(); newTaskInput.focus(); }
-  });
-
-  if (window.matchMedia("(max-width: 860px)").matches) sidebar.classList.add("collapsed");
-
-  initTheme();
-  setTodayLabel();
-  load();
-  var initialCounts = counts();
-  lastPendingCount = initialCounts.pending > 0 ? initialCounts.pending : (initialCounts.total > 0 ? 0 : null);
-  render();
-  setInterval(render, 60000);
-})();
 </script>
+
 </body>
 </html>
