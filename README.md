@@ -2,134 +2,71 @@
 
 ### Plan less. Focus more.
 
-FocusList is a distraction-free productivity workspace designed to help users organize tasks, focus on important work, and understand their productivity patterns.
+FocusList is a distraction-free productivity workspace designed to help users move through a simple workflow:
 
-Instead of being just another to-do list, FocusList combines task management, daily planning, focused work sessions, and productivity insights in one simple interface.
+> Capture → Plan → Focus → Complete → Measure
+
+Instead of being only a basic to-do list, FocusList combines task management, focus sessions, daily planning and explainable productivity insights.
 
 ---
 
-##  Features
+## Core Features
 
-###  Smart Task Management
-- Create and manage tasks
-- Priority levels: High, Medium and Low
+### Task Management
+
+- Create tasks
+- Priority levels
 - Due dates
-- Estimated completion time
-- Projects / tags
-- Task notes
-- Edit and delete tasks
-- Mark tasks as completed
-- Drag and drop task ordering
+- Estimated duration
+- Project/tag support
+- Notes
+- Search
+- Filtering
+- Sorting
+- Drag-and-drop ordering
+- Complete/reopen tasks
+- Delete tasks
 
-###  Daily Planning
-- Set a personal daily task target
-- Visual completion progress
-- Daily completion percentage
-- Open task counter
-- Productive-day streak
+### Focus Mode
 
-###  Focus Mode
-FocusList includes a dedicated focus workspace.
+FocusList includes a dedicated focused-work environment.
 
 Users can:
+
 - Select a task
-- Start a focused work session
-- Choose 15, 25 or 45 minute sessions
-- Pause or reset the timer
-- Automatically record completed focus sessions
-
-###  Productivity Insights
-The analytics section provides:
-- 7-day task completion history
-- Weekly focus time
-- Priority breakdown
-- Completed task count
-- High-priority completion rate
-- Average task estimate
-
-###  Search & Organization
-- Search tasks, notes and projects
-- Filter by status
-- Filter by priority
-- Sort by smart order, due date, priority or creation time
-- Dedicated inbox for unscheduled tasks
-
-###  Keyboard Shortcuts
-
-| Shortcut | Action |
-|---|---|
-| `N` | New task |
-| `F` | Focus mode |
-| `/` | Search |
-| `1` | Today |
-| `2` | Inbox |
-| `4` | Insights |
-| `T` | Toggle theme |
-| `Ctrl/Cmd + K` | Command palette |
+- Start a 15-minute session
+- Start a 25-minute session
+- Start a 45-minute session
+- Pause a session
+- Reset a session
+- Record completed focus sessions
 
 ---
 
-##  UI / UX
+## Focus Intelligence
 
-FocusList uses a minimal interface designed around reducing visual distraction.
+FocusList contains a lightweight explainable recommendation engine.
 
-The interface includes:
+It evaluates:
 
-- Responsive desktop layout
-- Mobile-friendly interface
-- Light and dark themes
-- Clear visual hierarchy
-- Progress indicators
-- Focused task cards
-- Keyboard navigation
-- Visible focus states
-- Reduced-motion support
+- Task priority
+- Due date
+- Overdue status
+- Estimated effort
+- Task context
 
----
+It then recommends the next task.
 
-##  Accessibility
+The recommendation is intentionally explainable instead of pretending to be an opaque AI system.
 
-FocusList includes several accessibility-focused features:
-
-- Semantic HTML
-- Accessible labels
-- Keyboard shortcuts
-- Skip navigation link
-- Visible focus indicators
-- ARIA labels where appropriate
-- Reduced-motion support
-- Live regions for dynamic updates
-
----
-
-##  Performance
-
-FocusList is built using lightweight web technologies without a large frontend framework.
-
-The application uses:
-
-- Vanilla JavaScript
-- Modular ES6 JavaScript
-- CSS
-- Local browser storage
-- Lightweight DOM rendering
-
-This keeps the application simple and fast.
-
----
-
-##  Project Architecture
+Example:
 
 ```text
-focuslist/
-│
-├── index.html
-├── styles.css
-├── manifest.webmanifest
-├── sw.js
-│
-└── js/
-    ├── app.js
-    ├── storage.js
-    ├── analytics.js
-    └── ui.js
+Recommended next
+
+Finish database assignment
+
+Reasons:
+• high priority
+• due today
+• 25-minute task
