@@ -10,7 +10,7 @@ Instead of being just another to-do list, FocusList combines task management, da
 
 ##  Features
 
-### 📋 Smart Task Management
+###  Smart Task Management
 - Create and manage tasks
 - Priority levels: High, Medium and Low
 - Due dates
