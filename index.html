@@ -3,13 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101318">
 
   <meta
     name="description"
-    content="FocusList is a distraction-free productivity workspace combining task planning, focus sessions and explainable productivity insights."
+    content="FocusList is a distraction-free productivity workspace with smart planning, focus sessions and explainable productivity insights."
   >
-
-  <meta name="theme-color" content="#101318">
 
   <title>FocusList — Plan less. Focus more.</title>
 
@@ -19,71 +18,106 @@
 
 <body>
 
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">
+  Skip to main content
+</a>
 
 <div class="app-shell">
 
-  <!-- SIDEBAR -->
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+
   <aside class="sidebar" aria-label="Primary navigation">
 
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">F</div>
+
+      <div class="brand-mark" aria-hidden="true">
+        F
+      </div>
 
       <div>
         <strong>FocusList</strong>
         <span>Plan less. Focus more.</span>
       </div>
+
     </div>
 
-    <nav class="nav-list" aria-label="Application views">
 
-      <button class="nav-item active"
-              data-view="today"
-              aria-current="page">
+    <nav class="nav-list">
+
+      <button
+        class="nav-item active"
+        data-view="today"
+        aria-current="page"
+      >
         <span>Today</span>
         <kbd>1</kbd>
       </button>
 
-      <button class="nav-item" data-view="inbox">
+      <button
+        class="nav-item"
+        data-view="inbox"
+      >
         <span>Inbox</span>
         <b id="inboxCount">0</b>
       </button>
 
-      <button class="nav-item" data-view="focus">
+      <button
+        class="nav-item"
+        data-view="focus"
+      >
         <span>Focus mode</span>
         <kbd>F</kbd>
       </button>
 
-      <button class="nav-item" data-view="analytics">
+      <button
+        class="nav-item"
+        data-view="analytics"
+      >
         <span>Insights</span>
         <kbd>4</kbd>
       </button>
 
     </nav>
 
+
     <div class="sidebar-section">
 
       <div class="section-label">
-        VIEWS
+        Views
       </div>
 
-      <button class="filter-link" data-filter="all">
+      <button
+        class="filter-link"
+        data-filter="all"
+      >
         All tasks
       </button>
 
-      <button class="filter-link" data-filter="active">
+      <button
+        class="filter-link"
+        data-filter="active"
+      >
         Open
       </button>
 
-      <button class="filter-link" data-filter="completed">
+      <button
+        class="filter-link"
+        data-filter="completed"
+      >
         Completed
       </button>
 
-      <button class="filter-link" data-filter="high">
+      <button
+        class="filter-link"
+        data-filter="high"
+      >
         High priority
       </button>
 
     </div>
+
 
     <div class="sidebar-bottom">
 
@@ -94,7 +128,8 @@
         </span>
 
         <strong>
-          <span id="dailyTargetValue">3</span> tasks
+          <span id="dailyTargetValue">3</span>
+          tasks
         </strong>
 
         <div class="progress-track">
@@ -106,6 +141,7 @@
         </small>
 
       </div>
+
 
       <button
         class="theme-button"
@@ -122,14 +158,20 @@
   </aside>
 
 
-  <!-- MAIN -->
+  <!-- =========================
+       MAIN
+  ========================== -->
+
   <main id="main" class="main">
 
     <header class="topbar">
 
       <div>
 
-        <p class="eyebrow" id="viewEyebrow">
+        <p
+          class="eyebrow"
+          id="viewEyebrow"
+        >
           TODAY
         </p>
 
@@ -137,18 +179,22 @@
           A clear-headed task desk.
         </h1>
 
-        <p class="subtext" id="viewSubtitle">
+        <p
+          class="subtext"
+          id="viewSubtitle"
+        >
           Everything important, without the noise.
         </p>
 
       </div>
+
 
       <div class="top-actions">
 
         <button
           class="icon-button"
           id="commandButton"
-          title="Command palette"
+          title="Command palette (Ctrl/Cmd + K)"
           aria-label="Open command palette"
         >
           ⌘K
@@ -166,41 +212,87 @@
     </header>
 
 
-    <!-- TODAY -->
-    <section id="dashboardView" class="view">
+    <!-- =========================
+         TODAY DASHBOARD
+    ========================== -->
+
+    <section
+      id="dashboardView"
+      class="view"
+    >
 
       <!-- STATS -->
 
-      <div class="stat-grid">
+      <div
+        class="stat-grid"
+        aria-label="Productivity overview"
+      >
 
         <article class="stat-card">
+
           <span>Today</span>
-          <strong id="statToday">0%</strong>
-          <small>completion</small>
+
+          <strong id="statToday">
+            0%
+          </strong>
+
+          <small>
+            completion
+          </small>
+
         </article>
 
+
         <article class="stat-card">
+
           <span>Open</span>
-          <strong id="statOpen">0</strong>
-          <small>tasks remaining</small>
+
+          <strong id="statOpen">
+            0
+          </strong>
+
+          <small>
+            tasks remaining
+          </small>
+
         </article>
 
+
         <article class="stat-card">
+
           <span>Focus</span>
-          <strong id="statFocus">0m</strong>
-          <small>this week</small>
+
+          <strong id="statFocus">
+            0m
+          </strong>
+
+          <small>
+            this week
+          </small>
+
         </article>
 
-        <article class="stat-card">
-          <span>Streak</span>
-          <strong id="statStreak">0</strong>
-          <small>productive days</small>
+
+        <article class="stat-card score-stat">
+
+          <span>Focus score</span>
+
+          <strong id="statScore">
+            0
+          </strong>
+
+          <small>
+            explainable / 100
+          </small>
+
         </article>
 
       </div>
 
 
-      <!-- INNOVATION FEATURE -->
+      <!-- =========================
+           FOCUS INTELLIGENCE
+      ========================== -->
 
       <section
         class="panel intelligence-panel"
@@ -227,6 +319,7 @@
 
         </div>
 
+
         <div
           id="recommendationCard"
           class="recommendation-card"
@@ -235,9 +328,58 @@
       </section>
 
 
-      <!-- COMPOSER + DAILY GOAL -->
+      <!-- =========================
+           SMART DAILY PLAN
+      ========================== -->
+
+      <section
+        class="panel daily-plan-panel"
+        aria-labelledby="planHeading"
+      >
+
+        <div class="panel-heading">
+
+          <div>
+
+            <span class="eyebrow">
+              SMART DAILY PLAN
+            </span>
+
+            <h2 id="planHeading">
+              Three tasks worth your attention.
+            </h2>
+
+          </div>
+
+          <div class="workload-chip">
+
+            Workload
+
+            <strong id="workloadValue">
+              0m
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="dailyPlanList"
+          class="daily-plan-list"
+        ></div>
+
+      </section>
+
+
+      <!-- =========================
+           COMPOSER + DAILY GOAL
+      ========================== -->
 
       <div class="workspace-grid">
+
+
+        <!-- ADD TASK -->
 
         <section
           class="panel composer-panel"
@@ -268,9 +410,15 @@
           </div>
 
 
-          <form id="taskForm" class="composer">
+          <form
+            id="taskForm"
+            class="composer"
+          >
 
-            <label class="sr-only" for="taskTitle">
+            <label
+              class="sr-only"
+              for="taskTitle"
+            >
               Task title
             </label>
 
@@ -294,7 +442,10 @@
                   Low priority
                 </option>
 
-                <option value="medium" selected>
+                <option
+                  value="medium"
+                  selected
+                >
                   Medium priority
                 </option>
 
@@ -319,6 +470,7 @@
                 step="5"
                 value="25"
                 aria-label="Estimated minutes"
+                title="Estimated minutes"
               >
 
 
@@ -334,7 +486,8 @@
                 class="primary-button"
                 type="submit"
               >
-                Add task <span>↵</span>
+                Add task
+                <span>↵</span>
               </button>
 
             </div>
@@ -351,6 +504,8 @@
 
         </section>
 
+
+        <!-- DAILY TARGET -->
 
         <section
           class="panel goal-panel"
@@ -404,7 +559,8 @@
 
 
           <p id="goalMessage">
-            Choose a few important tasks and finish them before adding more.
+            Choose a few important tasks and finish
+            them before adding more.
           </p>
 
         </section>
@@ -412,11 +568,14 @@
       </div>
 
 
-      <!-- TASKS -->
+      <!-- =========================
+           TASK LIST
+      ========================== -->
 
       <section class="task-section">
 
         <div class="toolbar">
+
 
           <div class="search-wrap">
 
@@ -443,7 +602,10 @@
 
           <div class="toolbar-actions">
 
-            <select id="sortSelect" aria-label="Sort tasks">
+            <select
+              id="sortSelect"
+              aria-label="Sort tasks"
+            >
 
               <option value="smart">
                 Smart order
@@ -503,7 +665,9 @@
     </section>
 
 
-    <!-- FOCUS -->
+    <!-- =========================
+         FOCUS MODE
+    ========================== -->
 
     <section
       id="focusView"
@@ -511,6 +675,7 @@
     >
 
       <div class="focus-layout">
+
 
         <section class="panel focus-panel">
 
@@ -523,7 +688,8 @@
           </h2>
 
           <p id="focusTaskMeta">
-            A focused session turns an intention into measurable progress.
+            A focused session turns an intention
+            into measurable progress.
           </p>
 
 
@@ -533,6 +699,14 @@
             aria-live="polite"
           >
             25:00
+          </div>
+
+
+          <div
+            class="timer-status"
+            id="timerStatus"
+          >
+            Ready when you are
           </div>
 
 
@@ -576,7 +750,8 @@
 
 
           <div class="focus-note">
-            Tip: hide distractions, work until the timer ends, then log the session.
+            Tip: hide distractions, work until the
+            timer ends, then log the session.
           </div>
 
         </section>
@@ -609,14 +784,64 @@
     </section>
 
 
-    <!-- ANALYTICS -->
+    <!-- =========================
+         ANALYTICS
+    ========================== -->
 
     <section
       id="analyticsView"
       class="view hidden"
     >
 
-      <div class="analytics-grid">
+
+      <div class="analytics-hero">
+
+
+        <!-- SCORE -->
+
+        <section class="panel score-panel">
+
+          <span class="eyebrow">
+            FOCUS SCORE
+          </span>
+
+
+          <div
+            class="score-orb"
+            id="scoreOrb"
+          >
+
+            <strong id="analyticsScore">
+              0
+            </strong>
+
+            <span>
+              /100
+            </span>
+
+          </div>
+
+
+          <div class="score-bar">
+
+            <span
+              id="scoreBar"
+              style="width:0%"
+            ></span>
+
+          </div>
+
+
+          <p>
+            Completion + focused work +
+            consistency, calculated locally
+            and explained.
+          </p>
+
+        </section>
+
+
+        <!-- CHART -->
 
         <section class="panel chart-panel">
 
@@ -636,6 +861,7 @@
 
           </div>
 
+
           <div
             id="completionChart"
             class="bar-chart"
@@ -644,6 +870,13 @@
 
         </section>
 
+      </div>
+
+
+      <div class="analytics-grid">
+
+
+        <!-- INSIGHTS -->
 
         <section class="panel insight-panel">
 
@@ -663,42 +896,15 @@
 
           </div>
 
+
           <div id="insightList"></div>
 
         </section>
 
-      </div>
 
+        <!-- FOCUS TIME -->
 
-      <div class="analytics-grid lower">
-
-        <section class="panel analytics-card">
-
-          <div class="panel-heading">
-
-            <div>
-
-              <span class="eyebrow">
-                TASK MIX
-              </span>
-
-              <h2>
-                By priority
-              </h2>
-
-            </div>
-
-          </div>
-
-          <div
-            id="priorityBreakdown"
-            class="breakdown"
-          ></div>
-
-        </section>
-
-
-        <section class="panel analytics-card">
+        <section class="panel">
 
           <div class="panel-heading">
 
@@ -716,6 +922,7 @@
 
           </div>
 
+
           <div class="big-metric">
 
             <strong id="weeklyFocusMetric">
@@ -728,6 +935,97 @@
 
           </div>
 
+
+          <div class="analytics-callout">
+
+            Focus sessions are stored locally
+            with the task they belong to.
+
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <div class="analytics-grid lower">
+
+
+        <!-- PRIORITY -->
+
+        <section class="panel">
+
+          <div class="panel-heading">
+
+            <div>
+
+              <span class="eyebrow">
+                TASK MIX
+              </span>
+
+              <h2>
+                By priority
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="priorityBreakdown"
+            class="breakdown"
+          ></div>
+
+        </section>
+
+
+        <!-- SCORE EXPLANATION -->
+
+        <section class="panel">
+
+          <div class="panel-heading">
+
+            <div>
+
+              <span class="eyebrow">
+                WHY THIS SCORE
+              </span>
+
+              <h2>
+                Transparent by design
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div class="formula-list">
+
+            <div>
+              <strong>45%</strong>
+              <span>
+                Task completion
+              </span>
+            </div>
+
+            <div>
+              <strong>35%</strong>
+              <span>
+                Focus minutes
+              </span>
+            </div>
+
+            <div>
+              <strong>20%</strong>
+              <span>
+                Consistency
+              </span>
+            </div>
+
+          </div>
+
         </section>
 
       </div>
@@ -735,7 +1033,9 @@
     </section>
 
 
-    <!-- INBOX -->
+    <!-- =========================
+         INBOX
+    ========================== -->
 
     <section
       id="inboxView"
@@ -753,10 +1053,12 @@
             </span>
 
             <h2>
-              Everything you haven't scheduled yet.
+              Everything you haven't
+              scheduled yet.
             </h2>
 
           </div>
+
 
           <button
             class="secondary-button"
@@ -767,12 +1069,17 @@
 
         </div>
 
+
         <div id="inboxList"></div>
 
       </div>
 
     </section>
 
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
 
     <footer class="footer">
 
@@ -793,7 +1100,9 @@
 </div>
 
 
-<!-- COMMAND PALETTE -->
+<!-- =========================
+     COMMAND PALETTE
+========================== -->
 
 <dialog
   id="commandDialog"
@@ -819,12 +1128,15 @@
 
   </div>
 
+
   <div id="commandList"></div>
 
 </dialog>
 
 
-<!-- DAILY TARGET -->
+<!-- =========================
+     TARGET DIALOG
+========================== -->
 
 <dialog
   id="targetDialog"
@@ -841,6 +1153,7 @@
       How many tasks matter today?
     </h2>
 
+
     <input
       id="targetInput"
       type="number"
@@ -849,6 +1162,7 @@
       value="3"
       aria-label="Daily task target"
     >
+
 
     <div class="dialog-actions">
 
@@ -886,13 +1200,12 @@
   src="js/app.js"
 ></script>
 
+
 <script>
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./sw.js")
-        .catch(() => {});
-    });
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch(() => {});
   }
 </script>
 

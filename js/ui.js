@@ -3,279 +3,330 @@ import {
   weeklyFocusMinutes,
   productiveStreak,
   lastSevenDays,
-  todayKey
+  todayKey,
+  focusScore,
+  dailyWorkload
 } from "./analytics.js";
 
+import {
+  formatMinutes
+} from "./focus.js";
 
-const escapeHTML =
-  value =>
-    String(value ?? "")
-      .replace(
-        /[&<>"']/g,
-        ch => ({
-          "&":"&amp;",
-          "<":"&lt;",
-          ">":"&gt;",
-          '"':"&quot;",
-          "'":"&#039;"
-        }[ch])
-      );
+import {
+  rankTasks
+} from "./intelligence.js";
 
 
-export function dueLabel(dueAt){
+/* =========================================
+   SECURITY / HTML ESCAPING
+========================================= */
 
-  if(!dueAt){
+const escapeHTML = value =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[char])
+  );
+
+
+/* =========================================
+   DATE HELPERS
+========================================= */
+
+export function dueLabel(dueAt) {
+
+  if (!dueAt) {
     return "";
   }
 
-  const today=new Date();
+  const today = new Date();
 
   today.setHours(
-    0,0,0,0
+    0,
+    0,
+    0,
+    0
   );
 
   const due =
-    new Date(
-      dueAt+"T00:00:00"
-    );
+    new Date(`${dueAt}T00:00:00`);
 
   const diff =
     Math.round(
-      (due-today)/86400000
+      (due - today) /
+      86400000
     );
 
-
-  if(diff<0)
+  if (diff < 0) {
     return "Overdue";
+  }
 
-  if(diff===0)
+  if (diff === 0) {
     return "Today";
+  }
 
-  if(diff===1)
+  if (diff === 1) {
     return "Tomorrow";
-
+  }
 
   return due.toLocaleDateString(
     undefined,
     {
-      day:"numeric",
-      month:"short"
+      day: "numeric",
+      month: "short"
     }
   );
-
 }
 
+
+/* =========================================
+   TASK LIST
+========================================= */
 
 export function renderTaskList(
   container,
   tasks,
   handlers,
-  emptyTitle="Nothing here."
-){
+  emptyTitle = "Nothing here."
+) {
 
-  if(!tasks.length){
+  if (!tasks.length) {
 
-    container.innerHTML=`
+    container.innerHTML = `
       <div class="empty">
-        <strong>${emptyTitle}</strong>
+
+        <strong>
+          ${escapeHTML(emptyTitle)}
+        </strong>
+
         <span>
-          Capture a task above or change your filters.
+          Capture a task above or
+          change your filters.
         </span>
+
       </div>
     `;
 
     return;
-
   }
 
 
-  container.innerHTML =
-    tasks.map(task=>{
+  container.innerHTML = tasks
+    .map(task => {
 
       const due =
-        dueLabel(
-          task.dueAt
-        );
-
+        dueLabel(task.dueAt);
 
       return `
 
-      <article
-        class="task-card ${task.completed?"task-done":""}"
-        draggable="true"
-        data-id="${task.id}"
-      >
-
-        <div
-          class="priority-bar priority-${task.priority}"
-          aria-hidden="true"
-        ></div>
-
-
-        <button
-          class="check ${task.completed?"done":""}"
-          data-action="toggle"
-          aria-label="${
-            task.completed
-              ?"Mark incomplete"
-              :"Mark complete"
-          }"
+        <article
+          class="task-card ${task.completed ? "task-done" : ""}"
+          draggable="true"
+          data-id="${escapeHTML(task.id)}"
         >
-          ${task.completed?"✓":""}
-        </button>
+
+          <div
+            class="priority-bar priority-${escapeHTML(task.priority)}"
+            aria-hidden="true"
+          ></div>
 
 
-        <div>
+          <button
+            class="check ${task.completed ? "done" : ""}"
+            data-action="toggle"
+            aria-label="${
+              task.completed
+                ? "Mark incomplete"
+                : "Mark complete"
+            }"
+          >
+            ${task.completed ? "✓" : ""}
+          </button>
 
-          <div class="task-title">
-            ${escapeHTML(task.title)}
+
+          <div class="task-content">
+
+            <div class="task-title">
+              ${escapeHTML(task.title)}
+            </div>
+
+
+            <div class="task-meta">
+
+              <span class="badge">
+                ${escapeHTML(task.priority)}
+                priority
+              </span>
+
+
+              <span class="badge">
+                ${task.estimate || 25} min
+              </span>
+
+
+              ${
+                task.project
+                  ? `
+                    <span class="badge project">
+                      ${escapeHTML(task.project)}
+                    </span>
+                  `
+                  : ""
+              }
+
+
+              ${
+                due
+                  ? `
+                    <span
+                      class="badge ${
+                        due === "Overdue"
+                          ? "overdue"
+                          : ""
+                      }"
+                    >
+                      ${escapeHTML(due)}
+                    </span>
+                  `
+                  : ""
+              }
+
+            </div>
+
+
+            ${
+              task.notes
+                ? `
+                  <div class="task-note">
+                    ${escapeHTML(task.notes)}
+                  </div>
+                `
+                : ""
+            }
+
           </div>
 
 
-          <div class="task-meta">
-
-            <span class="badge">
-              ${escapeHTML(task.priority)}
-              priority
-            </span>
-
-            <span class="badge">
-              ${task.estimate||25} min
-            </span>
+          <div class="task-actions">
 
             ${
-              task.project
+              !task.completed
                 ? `
-                  <span class="badge project">
-                    ${escapeHTML(task.project)}
-                  </span>
-                `
-                :""
-            }
-
-            ${
-              due
-                ? `
-                  <span
-                    class="badge ${
-                      due==="Overdue"
-                        ?"overdue"
-                        :""
-                    }"
+                  <button
+                    data-action="focus"
+                    title="Focus on this task"
+                    aria-label="Focus on ${escapeHTML(task.title)}"
                   >
-                    ${due}
-                  </span>
+                    ▶
+                  </button>
                 `
-                :""
+                : ""
             }
+
+
+            <button
+              data-action="edit"
+              title="Edit task"
+              aria-label="Edit ${escapeHTML(task.title)}"
+            >
+              ✎
+            </button>
+
+
+            <button
+              data-action="delete"
+              title="Delete task"
+              aria-label="Delete ${escapeHTML(task.title)}"
+            >
+              ×
+            </button>
 
           </div>
 
-
-          ${
-            task.notes
-              ? `
-                <div class="task-note">
-                  ${escapeHTML(task.notes)}
-                </div>
-              `
-              :""
-          }
-
-        </div>
-
-
-        <div class="task-actions">
-
-          ${
-            !task.completed
-              ? `
-                <button
-                  data-action="focus"
-                  title="Focus on this task"
-                  aria-label="Focus on ${escapeHTML(task.title)}"
-                >
-                  ▶
-                </button>
-              `
-              :""
-          }
-
-
-          <button
-            data-action="edit"
-            title="Edit task"
-            aria-label="Edit ${escapeHTML(task.title)}"
-          >
-            ✎
-          </button>
-
-
-          <button
-            data-action="delete"
-            title="Delete task"
-            aria-label="Delete ${escapeHTML(task.title)}"
-          >
-            ×
-          </button>
-
-        </div>
-
-      </article>
-
+        </article>
       `;
 
-    }).join("");
+    })
+    .join("");
 
+
+  /* Drag + drop */
 
   container
     .querySelectorAll(".task-card")
-    .forEach(card=>{
+    .forEach(card => {
 
       card.addEventListener(
         "dragstart",
-        e =>
-          e.dataTransfer.setData(
+        event => {
+
+          event.dataTransfer.effectAllowed =
+            "move";
+
+          event.dataTransfer.setData(
             "text/plain",
             card.dataset.id
-          )
+          );
+
+        }
       );
 
 
       card.addEventListener(
         "dragover",
-        e=>e.preventDefault()
+        event => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect =
+            "move";
+        }
       );
 
 
       card.addEventListener(
         "drop",
-        e=>
+        event => {
+
+          event.preventDefault();
+
           handlers.reorder(
-            e.dataTransfer.getData(
+            event.dataTransfer.getData(
               "text/plain"
             ),
             card.dataset.id
-          )
+          );
+
+        }
       );
 
 
       card.addEventListener(
         "click",
-        e=>{
+        event => {
+
+          const button =
+            event.target.closest(
+              "[data-action]"
+            );
+
+          if (!button) {
+            return;
+          }
 
           const action =
-            e.target.closest(
-              "[data-action]"
-            )?.dataset.action;
+            button.dataset.action;
 
-
-          if(action){
-
+          if (
+            typeof handlers[action] ===
+            "function"
+          ) {
             handlers[action](
               card.dataset.id
             );
-
           }
 
         }
@@ -286,56 +337,91 @@ export function renderTaskList(
 }
 
 
-export function renderStats(state){
+/* =========================================
+   GLOBAL STATS
+========================================= */
 
-  const s =
-    completionStats(
-      state.tasks
+export function renderStats(state) {
+
+  const stats =
+    completionStats(state.tasks);
+
+  const score =
+    focusScore(state);
+
+
+  const statToday =
+    document.querySelector("#statToday");
+
+  const statOpen =
+    document.querySelector("#statOpen");
+
+  const statFocus =
+    document.querySelector("#statFocus");
+
+  const statScore =
+    document.querySelector("#statScore");
+
+
+  if (statToday) {
+    statToday.textContent =
+      `${stats.percent}%`;
+  }
+
+  if (statOpen) {
+    statOpen.textContent =
+      stats.active;
+  }
+
+  if (statFocus) {
+    statFocus.textContent =
+      formatMinutes(
+        weeklyFocusMinutes(
+          state.sessions
+        )
+      );
+  }
+
+  if (statScore) {
+    statScore.textContent =
+      score;
+  }
+
+
+  /* Inbox */
+
+  const inboxCount =
+    document.querySelector(
+      "#inboxCount"
     );
 
+  if (inboxCount) {
 
-  document.querySelector(
-    "#statToday"
-  ).textContent =
-    `${s.percent}%`;
+    inboxCount.textContent =
+      state.tasks.filter(
+        task =>
+          !task.dueAt &&
+          !task.completed
+      ).length;
 
-
-  document.querySelector(
-    "#statOpen"
-  ).textContent =
-    s.active;
-
-
-  document.querySelector(
-    "#statFocus"
-  ).textContent =
-    `${weeklyFocusMinutes(
-      state.sessions
-    )}m`;
+  }
 
 
-  document.querySelector(
-    "#statStreak"
-  ).textContent =
-    productiveStreak(
-      state.tasks
-    );
-
-
-  document.querySelector(
-    "#inboxCount"
-  ).textContent =
-    state.tasks.filter(
-      t=>!t.dueAt&&!t.completed
-    ).length;
-
+  /* Daily target */
 
   const targetDone =
     state.tasks.filter(
-      t =>
-        t.completedDate===
+      task =>
+        task.completedDate ===
         todayKey()
     ).length;
+
+
+  const target =
+    Math.max(
+      1,
+      state.target || 3
+    );
 
 
   const targetPercent =
@@ -343,70 +429,443 @@ export function renderStats(state){
       100,
       Math.round(
         targetDone /
-        Math.max(
-          1,
-          state.target
-        ) *
+        target *
         100
       )
     );
 
 
-  document.querySelector(
-    "#dailyTargetValue"
-  ).textContent =
-    state.target;
+  const targetValue =
+    document.querySelector(
+      "#dailyTargetValue"
+    );
+
+  const targetBar =
+    document.querySelector(
+      "#dailyTargetBar"
+    );
+
+  const targetText =
+    document.querySelector(
+      "#dailyTargetText"
+    );
 
 
-  document.querySelector(
-    "#dailyTargetBar"
-  ).style.width =
-    `${targetPercent}%`;
+  if (targetValue) {
+    targetValue.textContent =
+      target;
+  }
+
+  if (targetBar) {
+    targetBar.style.width =
+      `${targetPercent}%`;
+  }
+
+  if (targetText) {
+    targetText.textContent =
+      `${targetDone} / ${target} completed`;
+  }
 
 
-  document.querySelector(
-    "#dailyTargetText"
-  ).textContent =
-    `${targetDone} / ${state.target} completed`;
+  /* Goal ring */
+
+  const goalPercent =
+    document.querySelector(
+      "#goalPercent"
+    );
+
+  const goalRing =
+    document.querySelector(
+      "#goalRing"
+    );
+
+  const goalMessage =
+    document.querySelector(
+      "#goalMessage"
+    );
 
 
-  document.querySelector(
-    "#goalPercent"
-  ).textContent =
-    `${targetPercent}%`;
+  if (goalPercent) {
+    goalPercent.textContent =
+      `${targetPercent}%`;
+  }
 
 
-  document.querySelector(
-    "#goalRing"
-  ).style.background =
-    `conic-gradient(
-      var(--green)
-      ${targetPercent*3.6}deg,
-      var(--surface-2)
-      0deg
-    )`;
+  if (goalRing) {
+
+    goalRing.style.setProperty(
+      "--progress",
+      `${targetPercent * 3.6}deg`
+    );
+
+    goalRing.setAttribute(
+      "aria-label",
+      `Daily completion ${targetPercent}%`
+    );
+
+  }
 
 
-  document.querySelector(
-    "#goalMessage"
-  ).textContent =
-    targetDone>=state.target
+  if (goalMessage) {
 
-      ? "Target reached. Protect the rest of your attention."
+    goalMessage.textContent =
+      targetDone >= target
+        ? "Target reached. Protect the rest of your attention."
+        : `${Math.max(
+            0,
+            target - targetDone
+          )} more important task${
+            target - targetDone === 1
+              ? ""
+              : "s"
+          } to hit today's target.`;
 
-      : `${Math.max(
-          0,
-          state.target-targetDone
-        )} more important task${
-          state.target-targetDone===1
-            ?""
-            :"s"
-        } to hit today's target.`;
+  }
+
+
+  /* Workload */
+
+  const workload =
+    document.querySelector(
+      "#workloadValue"
+    );
+
+  if (workload) {
+
+    workload.textContent =
+      formatMinutes(
+        dailyWorkload(
+          state.tasks
+        )
+      );
+
+  }
+
+
+  /* Score bar */
+
+  const scoreBar =
+    document.querySelector(
+      "#scoreBar"
+    );
+
+  if (scoreBar) {
+
+    scoreBar.style.width =
+      `${score}%`;
+
+  }
+
+
+  const scoreOrb =
+    document.querySelector(
+      "#scoreOrb"
+    );
+
+  if (scoreOrb) {
+
+    scoreOrb.style.setProperty(
+      "--score",
+      score
+    );
+
+  }
 
 }
 
 
-export function renderAnalytics(state){
+/* =========================================
+   SMART DAILY PLAN
+========================================= */
+
+export function renderDailyPlan(
+  state,
+  handlers
+) {
+
+  const container =
+    document.querySelector(
+      "#dailyPlanList"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const plan =
+    rankTasks(
+      state.tasks
+    ).slice(0, 3);
+
+
+  if (!plan.length) {
+
+    container.innerHTML = `
+      <div class="empty compact">
+
+        <strong>
+          Your plan is clear.
+        </strong>
+
+        <span>
+          Add an open task and
+          FocusList will build
+          your plan automatically.
+        </span>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    plan.map(
+      ({ task, score }, index) => `
+
+        <article class="plan-item">
+
+          <div class="plan-number">
+            ${index + 1}
+          </div>
+
+
+          <div class="plan-main">
+
+            <strong>
+              ${escapeHTML(task.title)}
+            </strong>
+
+            <span>
+              ${escapeHTML(task.priority)}
+              priority ·
+              ${task.estimate || 25} min
+
+              ${
+                task.dueAt
+                  ? ` · ${escapeHTML(
+                      dueLabel(
+                        task.dueAt
+                      )
+                    )}`
+                  : ""
+              }
+
+            </span>
+
+          </div>
+
+
+          <span
+            class="plan-score"
+            title="Explainable priority score"
+          >
+            ${score}
+          </span>
+
+
+          <button
+            class="secondary-button small"
+            data-plan-focus="${escapeHTML(task.id)}"
+          >
+            Focus
+          </button>
+
+        </article>
+      `
+    ).join("");
+
+
+  container
+    .querySelectorAll(
+      "[data-plan-focus]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          handlers.focus(
+            button.dataset.planFocus
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================================
+   FOCUS INTELLIGENCE
+========================================= */
+
+export function renderRecommendation(
+  state,
+  handlers
+) {
+
+  const card =
+    document.querySelector(
+      "#recommendationCard"
+    );
+
+  if (!card) {
+    return;
+  }
+
+
+  const recommendation =
+    rankTasks(state.tasks)[0];
+
+
+  if (!recommendation) {
+
+    card.innerHTML = `
+
+      <div>
+
+        <span class="recommendation-label">
+          READY
+        </span>
+
+        <h3>
+          No open task yet.
+        </h3>
+
+        <p>
+          Add something you want to
+          accomplish and FocusList will
+          build a reasoned next-step
+          recommendation.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  const {
+    task,
+    score
+  } = recommendation;
+
+
+  const reasons = [];
+
+
+  if (task.priority === "high") {
+    reasons.push(
+      "High priority"
+    );
+  }
+
+  if (task.dueAt) {
+
+    reasons.push(
+      dueLabel(task.dueAt)
+    );
+
+  }
+
+  reasons.push(
+    `${task.estimate || 25}-minute estimate`
+  );
+
+
+  card.innerHTML = `
+
+    <div>
+
+      <span class="recommendation-label">
+        RECOMMENDED NEXT
+      </span>
+
+
+      <h3>
+        ${escapeHTML(task.title)}
+      </h3>
+
+
+      <p>
+        FocusList prioritizes urgency,
+        importance, task size and available
+        context locally. Your task data
+        is not sent to an AI service.
+      </p>
+
+
+      <div class="recommendation-reasons">
+
+        ${reasons
+          .slice(0, 3)
+          .map(
+            reason => `
+              <span>
+                ${escapeHTML(reason)}
+              </span>
+            `
+          )
+          .join("")}
+
+      </div>
+
+    </div>
+
+
+    <div class="recommendation-score">
+
+      <strong>
+        ${score}
+      </strong>
+
+      <small>
+        PRIORITY SCORE
+      </small>
+
+
+      <button
+        class="primary-button small"
+        id="recommendationFocus"
+      >
+        Start focus
+      </button>
+
+    </div>
+
+  `;
+
+
+  const focusButton =
+    document.querySelector(
+      "#recommendationFocus"
+    );
+
+
+  if (focusButton) {
+
+    focusButton.onclick =
+      () => handlers.focus(
+        task.id
+      );
+
+  }
+
+}
+
+
+/* =========================================
+   ANALYTICS
+========================================= */
+
+export function renderAnalytics(state) {
 
   const days =
     lastSevenDays(
@@ -414,204 +873,324 @@ export function renderAnalytics(state){
     );
 
 
+  /* Chart */
+
   const chart =
     document.querySelector(
       "#completionChart"
     );
 
 
-  const max =
-    Math.max(
-      1,
-      ...days.map(
-        d=>d.count
-      )
+  if (chart) {
+
+    const max =
+      Math.max(
+        1,
+        ...days.map(
+          day => day.count
+        )
+      );
+
+
+    chart.innerHTML =
+      days
+        .map(
+          day => `
+
+            <div class="bar-col">
+
+              <span>
+                ${day.count}
+              </span>
+
+              <div
+                class="bar"
+                style="
+                  height:${Math.max(
+                    3,
+                    day.count /
+                    max *
+                    180
+                  )}px
+                "
+              ></div>
+
+              <small>
+                ${escapeHTML(
+                  day.label
+                )}
+              </small>
+
+            </div>
+
+          `
+        )
+        .join("");
+
+  }
+
+
+  /* Score */
+
+  const score =
+    focusScore(state);
+
+
+  const analyticsScore =
+    document.querySelector(
+      "#analyticsScore"
     );
 
+  if (analyticsScore) {
+    analyticsScore.textContent =
+      score;
+  }
 
-  chart.innerHTML =
-    days.map(
-      d=>`
 
-      <div class="bar-col">
+  const scoreBar =
+    document.querySelector(
+      "#scoreBar"
+    );
 
-        <span>
-          ${d.count}
-        </span>
+  if (scoreBar) {
+    scoreBar.style.width =
+      `${score}%`;
+  }
 
-        <div
-          class="bar"
-          style="
-            height:
-            ${Math.max(
-              3,
-              d.count/max*180
-            )}px
-          "
-        ></div>
 
-        <small>
-          ${d.label}
-        </small>
+  const scoreOrb =
+    document.querySelector(
+      "#scoreOrb"
+    );
 
-      </div>
+  if (scoreOrb) {
 
-      `
-    ).join("");
+    scoreOrb.style.setProperty(
+      "--score",
+      score
+    );
 
+  }
+
+
+  /* Basic insights */
 
   const completed =
     state.tasks.filter(
-      t=>t.completed
+      task => task.completed
     ).length;
 
 
   const highDone =
     state.tasks.filter(
-      t =>
-        t.priority==="high" &&
-        t.completed
+      task =>
+        task.priority === "high" &&
+        task.completed
     ).length;
 
 
   const highTotal =
     state.tasks.filter(
-      t =>
-        t.priority==="high"
+      task =>
+        task.priority === "high"
     ).length;
 
 
+  const completedTasks =
+    state.tasks.filter(
+      task => task.completed
+    );
+
+
   const avgEstimate =
-    completed
-
+    completedTasks.length
       ? Math.round(
-          state.tasks
-            .filter(
-              t=>t.completed
-            )
-            .reduce(
-              (a,t)=>
-                a+(t.estimate||25),
-              0
-            )/completed
+          completedTasks.reduce(
+            (sum, task) =>
+              sum +
+              (
+                Number(
+                  task.estimate
+                ) || 25
+              ),
+            0
+          ) /
+          completedTasks.length
         )
-
       : 0;
 
 
-  document.querySelector(
-    "#insightList"
-  ).innerHTML=`
-
-    <div class="insight">
-
-      <strong>
-        ${completed} tasks completed
-      </strong>
-
-      <span>
-        Across your current local history.
-      </span>
-
-    </div>
-
-
-    <div class="insight">
-
-      <strong>
-        ${
-          highTotal
-            ? Math.round(
-                highDone/
-                highTotal*
-                100
-              )
-            : 0
-        }% of high-priority tasks finished
-      </strong>
-
-      <span>
-        Keep urgent work visible without letting it crowd out everything else.
-      </span>
-
-    </div>
-
-
-    <div class="insight">
-
-      <strong>
-        ${avgEstimate||0} min average estimate
-      </strong>
-
-      <span>
-        Use estimates to make daily planning more realistic.
-      </span>
-
-    </div>
-
-  `;
-
-
-  const priorities=[
-    "high",
-    "medium",
-    "low"
-  ];
-
-
-  const total =
-    Math.max(
-      1,
-      state.tasks.length
+  const insightList =
+    document.querySelector(
+      "#insightList"
     );
 
 
-  document.querySelector(
-    "#priorityBreakdown"
-  ).innerHTML =
-    priorities.map(
-      p=>{
+  if (insightList) {
 
-        const count =
-          state.tasks.filter(
-            t=>t.priority===p
-          ).length;
+    insightList.innerHTML = `
 
+      <div class="insight">
 
-        return `
+        <strong>
+          ${completed}
+          tasks completed
+        </strong>
 
-        <div class="break-row">
+        <span>
+          Across your current local history.
+        </span>
 
-          <span>
-            ${p}
-          </span>
-
-          <i>
-            <span
-              style="
-                width:
-                ${count/total*100}%
-              "
-            ></span>
-          </i>
-
-          <b>
-            ${count}
-          </b>
-
-        </div>
-
-        `;
-
-      }
-    ).join("");
+      </div>
 
 
-  document.querySelector(
-    "#weeklyFocusMetric"
-  ).textContent =
+      <div class="insight">
+
+        <strong>
+          ${
+            highTotal
+              ? Math.round(
+                  highDone /
+                  highTotal *
+                  100
+                )
+              : 0
+          }%
+          of high-priority tasks finished
+        </strong>
+
+        <span>
+          Keep urgent work visible without
+          letting it crowd out everything else.
+        </span>
+
+      </div>
+
+
+      <div class="insight">
+
+        <strong>
+          ${avgEstimate || 0}
+          min average estimate
+        </strong>
+
+        <span>
+          Estimates make daily planning
+          more realistic.
+        </span>
+
+      </div>
+
+
+      <div class="insight">
+
+        <strong>
+          ${score}/100 focus score
+        </strong>
+
+        <span>
+          Based on completion, focus time
+          and productive-day consistency.
+        </span>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* Priority breakdown */
+
+  const breakdown =
+    document.querySelector(
+      "#priorityBreakdown"
+    );
+
+
+  if (breakdown) {
+
+    const priorities = [
+      "high",
+      "medium",
+      "low"
+    ];
+
+
+    const total =
+      Math.max(
+        1,
+        state.tasks.length
+      );
+
+
+    breakdown.innerHTML =
+      priorities
+        .map(priority => {
+
+          const count =
+            state.tasks.filter(
+              task =>
+                task.priority ===
+                priority
+            ).length;
+
+
+          return `
+
+            <div class="break-row">
+
+              <span>
+                ${priority}
+              </span>
+
+              <i>
+
+                <span
+                  style="
+                    width:${
+                      count /
+                      total *
+                      100
+                    }%
+                  "
+                ></span>
+
+              </i>
+
+              <b>
+                ${count}
+              </b>
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
+  }
+
+
+  /* Weekly focus */
+
+  const weeklyFocus =
     weeklyFocusMinutes(
       state.sessions
     );
+
+
+  const weeklyMetric =
+    document.querySelector(
+      "#weeklyFocusMetric"
+    );
+
+
+  if (weeklyMetric) {
+
+    weeklyMetric.textContent =
+      weeklyFocus;
+
+  }
 
 }

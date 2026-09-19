@@ -6,13 +6,29 @@ import {
 import {
   renderTaskList,
   renderStats,
-  renderAnalytics
+  renderAnalytics,
+  renderDailyPlan,
+  renderRecommendation
 } from "./ui.js";
 
 import {
-  recommendNextTask
-} from "./intelligence.js";
+  createTask,
+  matchesTask,
+  sortTaskCollection
+} from "./tasks.js";
 
+import {
+  createFocusSession
+} from "./focus.js";
+
+import {
+  getCommands
+} from "./commands.js";
+
+
+/* =========================================
+   APPLICATION STATE
+========================================= */
 
 const state =
   loadState();
@@ -35,12 +51,21 @@ let focusTaskId =
 
 
 let timer = {
+
   seconds: 1500,
+
   running: false,
+
   interval: null,
+
   minutes: 25
+
 };
 
+
+/* =========================================
+   DOM HELPERS
+========================================= */
 
 const $ =
   selector =>
@@ -58,23 +83,25 @@ const $$ =
     ];
 
 
-function uid() {
-
-  return `
-    ${Date.now()}-
-    ${Math.random()
-      .toString(16)
-      .slice(2)}
-  `;
-
-}
-
+/* =========================================
+   BASIC HELPERS
+========================================= */
 
 function today() {
 
   return new Date()
     .toISOString()
     .slice(0, 10);
+
+}
+
+
+function taskById(id) {
+
+  return state.tasks.find(
+    task =>
+      task.id === id
+  );
 
 }
 
@@ -88,182 +115,51 @@ function save() {
 }
 
 
+/* =========================================
+   TOAST
+========================================= */
+
 function showToast(message) {
 
-  const element =
+  const toast =
     $("#toast");
 
-  element.textContent =
+  if (!toast) {
+    return;
+  }
+
+
+  toast.textContent =
     message;
 
-  element.classList.add(
+  toast.classList.add(
     "show"
   );
 
+
   clearTimeout(
-    showToast.t
+    showToast.timer
   );
 
-  showToast.t =
+
+  showToast.timer =
     setTimeout(
-      () =>
-        element.classList.remove(
+      () => {
+
+        toast.classList.remove(
           "show"
-        ),
+        );
+
+      },
       2200
     );
-}
-
-
-function matches(task) {
-
-  if (
-    currentFilter === "active" &&
-    task.completed
-  ) {
-    return false;
-  }
-
-
-  if (
-    currentFilter === "completed" &&
-    !task.completed
-  ) {
-    return false;
-  }
-
-
-  if (
-    currentFilter === "high" &&
-    task.priority !== "high"
-  ) {
-    return false;
-  }
-
-
-  if (search) {
-
-    const hay =
-      `
-        ${task.title}
-        ${task.notes || ""}
-        ${task.project || ""}
-      `.toLowerCase();
-
-
-    if (
-      !hay.includes(
-        search.toLowerCase()
-      )
-    ) {
-      return false;
-    }
-
-  }
-
-
-  return true;
-}
-
-
-function sortTasks(tasks) {
-
-  const rank = {
-    high: 0,
-    medium: 1,
-    low: 2
-  };
-
-
-  return [...tasks].sort(
-    (a, b) => {
-
-      if (
-        sort === "priority"
-      ) {
-
-        return (
-          rank[a.priority] -
-          rank[b.priority]
-        );
-
-      }
-
-
-      if (
-        sort === "created"
-      ) {
-
-        return b.createdAt.localeCompare(
-          a.createdAt
-        );
-
-      }
-
-
-      if (
-        sort === "due"
-      ) {
-
-        return (
-          (a.dueAt || "9999")
-            .localeCompare(
-              b.dueAt || "9999"
-            )
-        );
-
-      }
-
-
-      if (
-        a.completed !==
-        b.completed
-      ) {
-
-        return (
-          Number(a.completed) -
-          Number(b.completed)
-        );
-
-      }
-
-
-      if (
-        a.dueAt !==
-        b.dueAt
-      ) {
-
-        return (
-          (a.dueAt || "9999")
-            .localeCompare(
-              b.dueAt || "9999"
-            )
-        );
-
-      }
-
-
-      return (
-        rank[a.priority] -
-        rank[b.priority]
-      );
-
-    }
-  );
-}
-
-
-function taskById(id) {
-
-  return state.tasks.find(
-    t =>
-      t.id === id
-  );
 
 }
 
 
-/* ADD TASK */
+/* =========================================
+   ADD TASK
+========================================= */
 
 function addTask(event) {
 
@@ -281,54 +177,49 @@ function addTask(event) {
   }
 
 
-  state.tasks.unshift({
+  const task =
+    createTask({
 
-    id:
-      uid(),
+      title,
 
-    title,
+      priority:
+        $("#taskPriority")
+          .value,
 
-    priority:
-      $("#taskPriority").value,
+      dueAt:
+        $("#taskDue")
+          .value,
 
-    dueAt:
-      $("#taskDue").value || "",
+      estimate:
+        $("#taskEstimate")
+          .value,
 
-    estimate:
-      Number(
-        $("#taskEstimate").value
-      ) || 25,
+      project:
+        $("#taskProject")
+          .value,
 
-    project:
-      $("#taskProject")
-        .value
-        .trim(),
+      notes:
+        $("#taskNotes")
+          .value
 
-    notes:
-      $("#taskNotes")
-        .value
-        .trim(),
+    });
 
-    completed:
-      false,
 
-    createdAt:
-      new Date().toISOString(),
-
-    completedDate:
-      ""
-
-  });
+  state.tasks.unshift(
+    task
+  );
 
 
   event.target.reset();
 
 
-  $("#taskPriority").value =
+  $("#taskPriority")
+    .value =
     "medium";
 
 
-  $("#taskEstimate").value =
+  $("#taskEstimate")
+    .value =
     25;
 
 
@@ -336,13 +227,15 @@ function addTask(event) {
 
 
   showToast(
-    "Task added"
+    "Task added to your workspace"
   );
 
 }
 
 
-/* TOGGLE */
+/* =========================================
+   TOGGLE TASK
+========================================= */
 
 function toggleTask(id) {
 
@@ -377,7 +270,9 @@ function toggleTask(id) {
 }
 
 
-/* EDIT */
+/* =========================================
+   EDIT TASK
+========================================= */
 
 function editTask(id) {
 
@@ -402,9 +297,14 @@ function editTask(id) {
   }
 
 
-  task.title =
-    title.trim() ||
-    task.title;
+  const cleanTitle =
+    title.trim();
+
+
+  if (cleanTitle) {
+    task.title =
+      cleanTitle;
+  }
 
 
   const notes =
@@ -415,24 +315,33 @@ function editTask(id) {
 
 
   if (notes !== null) {
+
     task.notes =
       notes.trim();
+
   }
 
 
   save();
 
+
+  showToast(
+    "Task updated"
+  );
+
 }
 
 
-/* DELETE */
+/* =========================================
+   DELETE TASK
+========================================= */
 
 function deleteTask(id) {
 
   const index =
     state.tasks.findIndex(
-      t =>
-        t.id === id
+      task =>
+        task.id === id
     );
 
 
@@ -450,6 +359,19 @@ function deleteTask(id) {
     );
 
 
+  if (
+    focusTaskId ===
+    removed.id
+  ) {
+
+    focusTaskId =
+      null;
+
+    stopTimer();
+
+  }
+
+
   save();
 
 
@@ -460,7 +382,9 @@ function deleteTask(id) {
 }
 
 
-/* FOCUS */
+/* =========================================
+   FOCUS MODE
+========================================= */
 
 function focusOn(id) {
 
@@ -483,14 +407,33 @@ function focusOn(id) {
 
   stopTimer();
 
+
   setTimer(25);
 
+
   render();
+
+
+  setTimeout(
+    () => {
+
+      const startButton =
+        $("#timerStart");
+
+      if (startButton) {
+        startButton.focus();
+      }
+
+    },
+    0
+  );
 
 }
 
 
-/* REORDER */
+/* =========================================
+   DRAG + DROP
+========================================= */
 
 function reorder(
   from,
@@ -506,23 +449,23 @@ function reorder(
   }
 
 
-  const a =
+  const fromIndex =
     state.tasks.findIndex(
-      t =>
-        t.id === from
+      task =>
+        task.id === from
     );
 
 
-  const b =
+  const toIndex =
     state.tasks.findIndex(
-      t =>
-        t.id === to
+      task =>
+        task.id === to
     );
 
 
   if (
-    a < 0 ||
-    b < 0
+    fromIndex < 0 ||
+    toIndex < 0
   ) {
     return;
   }
@@ -532,13 +475,13 @@ function reorder(
     item
   ] =
     state.tasks.splice(
-      a,
+      fromIndex,
       1
     );
 
 
   state.tasks.splice(
-    b,
+    toIndex,
     0,
     item
   );
@@ -546,263 +489,189 @@ function reorder(
 
   save();
 
+
+  showToast(
+    "Task order updated"
+  );
+
 }
 
 
-/* TASK RENDER */
+/* =========================================
+   TASK RENDERING
+========================================= */
 
 function renderTasks() {
 
-  const list =
-    sortTasks(
-      state.tasks.filter(
-        matches
-      )
+  const filtered =
+    state.tasks.filter(
+      task =>
+        matchesTask(
+          task,
+          {
+            filter:
+              currentFilter,
+
+            search
+          }
+        )
     );
+
+
+  const list =
+    sortTaskCollection(
+      filtered,
+      sort
+    );
+
+
+  const handlers = {
+
+    toggle:
+      toggleTask,
+
+    edit:
+      editTask,
+
+    delete:
+      deleteTask,
+
+    focus:
+      focusOn,
+
+    reorder
+
+  };
 
 
   renderTaskList(
     $("#taskList"),
     list,
-    {
-      toggle: toggleTask,
-      edit: editTask,
-      delete: deleteTask,
-      focus: focusOn,
-      reorder
-    }
+    handlers
   );
 
 
+  /* Inbox */
+
   const inbox =
     state.tasks.filter(
-      t =>
-        !t.dueAt &&
-        !t.completed
+      task =>
+        !task.dueAt &&
+        !task.completed
     );
 
 
   renderTaskList(
     $("#inboxList"),
     inbox,
-    {
-      toggle: toggleTask,
-      edit: editTask,
-      delete: deleteTask,
-      focus: focusOn,
-      reorder
-    },
+    handlers,
     "Your inbox is clear."
   );
 
 
+  /* Focus queue */
+
   const queue =
-    state.tasks
-      .filter(
-        t =>
-          !t.completed
-      )
-      .slice(0, 5);
+    sortTaskCollection(
+      state.tasks.filter(
+        task =>
+          !task.completed
+      ),
+      "smart"
+    ).slice(0, 5);
 
 
-  $("#focusQueue").innerHTML =
-    queue.length
+  const queueElement =
+    $("#focusQueue");
 
-      ? queue
-          .map(
-            t => `
-              <div class="queue-item">
 
-                <button
-                  data-queue="${t.id}"
-                >
-                  ${escapeText(
-                    t.title
-                  )}
-                </button>
+  if (!queueElement) {
+    return;
+  }
 
-                <small>
-                  ${t.estimate || 25}m
-                </small>
 
-              </div>
-            `
-          )
-          .join("")
+  if (!queue.length) {
 
-      : `
+    queueElement.innerHTML =
+      `
         <div class="empty">
           No open tasks.
         </div>
       `;
 
+    return;
+  }
+
+
+  queueElement.innerHTML =
+    queue
+      .map(
+        task => `
+
+          <div class="queue-item">
+
+            <button
+              data-queue="${escapeText(task.id)}"
+            >
+              ${escapeText(
+                task.title
+              )}
+            </button>
+
+            <small>
+              ${task.estimate || 25}m
+            </small>
+
+          </div>
+
+        `
+      )
+      .join("");
+
 
   $$(
     "#focusQueue [data-queue]"
-  ).forEach(
-    button => {
+  ).forEach(button => {
 
-      button.onclick =
-        () =>
-          focusOn(
-            button.dataset.queue
-          );
+    button.onclick =
+      () =>
+        focusOn(
+          button.dataset.queue
+        );
 
-    }
+  });
+
+}
+
+
+/* =========================================
+   ESCAPE
+========================================= */
+
+function escapeText(value) {
+
+  return String(
+    value ?? ""
+  ).replace(
+    /[&<>"']/g,
+    character =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[
+        character
+      ])
   );
 
 }
 
 
-function escapeText(value) {
-
-  return String(value)
-    .replace(
-      /[&<>"']/g,
-      character =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;"
-        }[character])
-    );
-
-}
-
-
-/* FOCUS INTELLIGENCE */
-
-function renderRecommendation() {
-
-  const container =
-    $("#recommendationCard");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  const recommendation =
-    recommendNextTask(
-      state.tasks
-    );
-
-
-  if (!recommendation) {
-
-    container.innerHTML = `
-
-      <div>
-
-        <div class="recommendation-label">
-          QUEUE CLEAR
-        </div>
-
-        <h3>
-          You're caught up.
-        </h3>
-
-        <p>
-          Complete your next task or capture a new one when something needs your attention.
-        </p>
-
-      </div>
-
-    `;
-
-    return;
-  }
-
-
-  const {
-    task,
-    score,
-    reasons
-  } =
-    recommendation;
-
-
-  container.innerHTML = `
-
-    <div>
-
-      <div class="recommendation-label">
-        RECOMMENDED NEXT
-      </div>
-
-      <h3>
-        ${escapeText(
-          task.title
-        )}
-      </h3>
-
-      <p>
-        Focus on this task first based on urgency, priority and estimated effort.
-      </p>
-
-      <div class="recommendation-reasons">
-
-        ${
-          reasons
-            .map(
-              reason =>
-                `
-                  <span>
-                    ${escapeText(
-                      reason
-                    )}
-                  </span>
-                `
-            )
-            .join("")
-        }
-
-      </div>
-
-    </div>
-
-
-    <div class="recommendation-score">
-
-      <strong>
-        ${Math.round(score)}
-      </strong>
-
-      <small>
-        FOCUS SCORE
-      </small>
-
-      <button
-        class="primary-button"
-        data-recommend-focus
-      >
-        Start focus
-      </button>
-
-    </div>
-
-  `;
-
-
-  container
-    .querySelector(
-      "[data-recommend-focus]"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        focusOn(
-          task.id
-        )
-    );
-
-}
-
-
-/* FOCUS VIEW */
+/* =========================================
+   FOCUS VIEW
+========================================= */
 
 function renderFocus() {
 
@@ -812,41 +681,61 @@ function renderFocus() {
     );
 
 
-  $("#focusTaskName")
-    .textContent =
-      task
-        ? task.title
-        : "Pick a task to begin.";
+  const name =
+    $("#focusTaskName");
+
+  const meta =
+    $("#focusTaskMeta");
 
 
-  $("#focusTaskMeta")
-    .textContent =
+  if (!name || !meta) {
+    return;
+  }
 
-      task
 
-        ? `
-          ${task.priority} priority ·
-          ${task.estimate || 25} min estimate
-          ${
-            task.project
-              ? ` · ${task.project}`
-              : ""
-          }
-        `
+  if (!task) {
 
-        : `
-          A focused session turns an intention into measurable progress.
-        `;
+    name.textContent =
+      "Pick a task to begin.";
+
+    meta.textContent =
+      "A focused session turns an intention into measurable progress.";
+
+    return;
+  }
+
+
+  name.textContent =
+    task.title;
+
+
+  meta.textContent =
+    `${task.priority} priority · ${
+      task.estimate || 25
+    } min estimate${
+      task.project
+        ? ` · ${task.project}`
+        : ""
+    }`;
+
 }
 
 
-/* VIEW */
+/* =========================================
+   VIEW SWITCHING
+========================================= */
 
 function renderView() {
 
-  $$(
-    "#dashboardView,#focusView,#analyticsView,#inboxView"
-  ).forEach(
+  const views = $$(`
+    #dashboardView,
+    #focusView,
+    #analyticsView,
+    #inboxView
+  `);
+
+
+  views.forEach(
     view =>
       view.classList.add(
         "hidden"
@@ -871,45 +760,49 @@ function renderView() {
   };
 
 
-  $(
-    viewMap[currentView]
-  ).classList.remove(
-    "hidden"
-  );
+  const activeView =
+    $(viewMap[currentView]);
+
+
+  if (activeView) {
+
+    activeView.classList.remove(
+      "hidden"
+    );
+
+  }
 
 
   $$(".nav-item")
-    .forEach(
-      button => {
+    .forEach(button => {
 
-        const active =
-          button.dataset.view ===
-          currentView;
+      const active =
+        button.dataset.view ===
+        currentView;
 
 
-        button.classList.toggle(
-          "active",
-          active
+      button.classList.toggle(
+        "active",
+        active
+      );
+
+
+      if (active) {
+
+        button.setAttribute(
+          "aria-current",
+          "page"
         );
 
+      } else {
 
-        if (active) {
-
-          button.setAttribute(
-            "aria-current",
-            "page"
-          );
-
-        } else {
-
-          button.removeAttribute(
-            "aria-current"
-          );
-
-        }
+        button.removeAttribute(
+          "aria-current"
+        );
 
       }
-    );
+
+    });
 
 
   const titles = {
@@ -941,19 +834,23 @@ function renderView() {
   };
 
 
+  const title =
+    titles[currentView];
+
+
   $("#viewEyebrow")
     .textContent =
-      titles[currentView][0];
+    title[0];
 
 
   $("#viewTitle")
     .textContent =
-      titles[currentView][1];
+    title[1];
 
 
   $("#viewSubtitle")
     .textContent =
-      titles[currentView][2];
+    title[2];
 
 
   renderFocus();
@@ -961,7 +858,9 @@ function renderView() {
 }
 
 
-/* MAIN RENDER */
+/* =========================================
+   MASTER RENDER
+========================================= */
 
 function render() {
 
@@ -969,50 +868,85 @@ function render() {
     state
   );
 
-  renderRecommendation();
+
+  renderDailyPlan(
+    state,
+    {
+      focus:
+        focusOn
+    }
+  );
+
+
+  renderRecommendation(
+    state,
+    {
+      focus:
+        focusOn
+    }
+  );
+
 
   renderTasks();
+
 
   renderAnalytics(
     state
   );
 
+
   renderView();
 
+
   applyTheme();
+
 
   updateTimerUI();
 
 }
 
 
-/* THEME */
+/* =========================================
+   THEME
+========================================= */
 
 function applyTheme() {
 
-  document.documentElement.dataset.theme =
-    state.theme === "dark"
-      ? "dark"
-      : "light";
+  document.documentElement
+    .dataset.theme =
+      state.theme === "dark"
+        ? "dark"
+        : "light";
 
 
-  $("#themeIcon")
-    .textContent =
+  const icon =
+    $("#themeIcon");
+
+
+  if (icon) {
+
+    icon.textContent =
       state.theme === "dark"
         ? "☀"
         : "☾";
 
+  }
+
 }
 
 
-/* NAVIGATION */
+/* =========================================
+   NAVIGATION
+========================================= */
 
 function setView(view) {
 
   currentView =
     view;
 
+
   render();
+
 
   window.scrollTo({
     top: 0,
@@ -1022,11 +956,14 @@ function setView(view) {
 }
 
 
-/* TIMER */
+/* =========================================
+   TIMER
+========================================= */
 
 function setTimer(minutes) {
 
   stopTimer();
+
 
   timer.minutes =
     minutes;
@@ -1034,33 +971,48 @@ function setTimer(minutes) {
   timer.seconds =
     minutes * 60;
 
+
   updateTimerUI();
 
 
   $$(".timer-options button")
-    .forEach(
-      button => {
+    .forEach(button => {
 
-        button.classList.toggle(
-          "selected",
-          Number(
-            button.dataset.minutes
-          ) === minutes
-        );
+      button.classList.toggle(
+        "selected",
+        Number(
+          button.dataset.minutes
+        ) === minutes
+      );
 
-      }
-    );
+    });
 
 }
 
 
 function updateTimerUI() {
 
+  const display =
+    $("#timerDisplay");
+
+
+  const startButton =
+    $("#timerStart");
+
+
+  const status =
+    $("#timerStatus");
+
+
+  if (!display) {
+    return;
+  }
+
+
   const minutes =
     String(
       Math.floor(
-        timer.seconds /
-        60
+        timer.seconds / 60
       )
     ).padStart(
       2,
@@ -1070,33 +1022,42 @@ function updateTimerUI() {
 
   const seconds =
     String(
-      timer.seconds %
-      60
+      timer.seconds % 60
     ).padStart(
       2,
       "0"
     );
 
 
-  $("#timerDisplay")
-    .textContent =
-      `${minutes}:${seconds}`;
+  display.textContent =
+    `${minutes}:${seconds}`;
 
 
-  $("#timerStart")
-    .textContent =
+  if (startButton) {
+
+    startButton.textContent =
       timer.running
         ? "Pause session"
         : "Start session";
+
+  }
+
+
+  if (status) {
+
+    status.textContent =
+      timer.running
+        ? "Deep work in progress"
+        : "Ready when you are";
+
+  }
 
 }
 
 
 function stopTimer() {
 
-  if (
-    timer.interval
-  ) {
+  if (timer.interval) {
 
     clearInterval(
       timer.interval
@@ -1111,7 +1072,12 @@ function stopTimer() {
   timer.running =
     false;
 
-  updateTimerUI();
+
+  if ($("#timerDisplay")) {
+
+    updateTimerUI();
+
+  }
 
 }
 
@@ -1122,12 +1088,18 @@ function startTimer() {
 
     stopTimer();
 
+    showToast(
+      "Focus session paused"
+    );
+
     return;
+
   }
 
 
   timer.running =
     true;
+
 
   updateTimerUI();
 
@@ -1149,39 +1121,34 @@ function startTimer() {
             timer.interval
           );
 
+
           timer.interval =
             null;
 
+
           timer.running =
             false;
+
+
+          const session =
+            createFocusSession({
+              minutes:
+                timer.minutes,
+
+              taskId:
+                focusTaskId || ""
+            });
+
+
+          state.sessions.push(
+            session
+          );
 
 
           const task =
             taskById(
               focusTaskId
             );
-
-
-          const mins =
-            timer.minutes;
-
-
-          state.sessions.push({
-
-            id:
-              uid(),
-
-            date:
-              new Date()
-                .toISOString(),
-
-            minutes:
-              mins,
-
-            taskId:
-              focusTaskId || ""
-
-          });
 
 
           if (task) {
@@ -1201,7 +1168,10 @@ function startTimer() {
 
           save();
 
-          setTimer(25);
+
+          setTimer(
+            25
+          );
 
         }
 
@@ -1212,7 +1182,9 @@ function startTimer() {
 }
 
 
-/* COMMAND PALETTE */
+/* =========================================
+   COMMAND PALETTE
+========================================= */
 
 function openCommands() {
 
@@ -1220,20 +1192,30 @@ function openCommands() {
     $("#commandDialog");
 
 
+  if (!dialog) {
+    return;
+  }
+
+
   $("#commandInput")
     .value = "";
 
 
-  renderCommands("");
+  renderCommands(
+    ""
+  );
 
 
   dialog.showModal();
 
 
   setTimeout(
-    () =>
+    () => {
+
       $("#commandInput")
-        .focus(),
+        ?.focus();
+
+    },
     0
   );
 
@@ -1242,129 +1224,127 @@ function openCommands() {
 
 function renderCommands(query) {
 
-  const commands = [
+  const commands =
+    getCommands({
 
-    [
-      "New task",
-      "N",
-      () => {
+      newTask:
+        () => {
 
-        setView(
-          "today"
-        );
+          setView(
+            "today"
+          );
 
-        $("#taskTitle")
-          .focus();
+          $("#taskTitle")
+            ?.focus();
 
-      }
-    ],
-
-    [
-      "Focus mode",
-      "F",
-      () =>
-        setView(
-          "focus"
-        )
-    ],
-
-    [
-      "Insights",
-      "4",
-      () =>
-        setView(
-          "analytics"
-        )
-    ],
-
-    [
-      "Show inbox",
-      "2",
-      () =>
-        setView(
-          "inbox"
-        )
-    ],
-
-    [
-      "Toggle theme",
-      "T",
-      () =>
-        $("#themeToggle")
-          .click()
-    ],
-
-    [
-      "Clear completed",
-      "",
-      () =>
-        $("#clearCompleted")
-          .click()
-    ]
-
-  ].filter(
-    command =>
-      command[0]
-        .toLowerCase()
-        .includes(
-          query.toLowerCase()
-        )
-  );
+        },
 
 
-  $("#commandList")
-    .innerHTML =
-
-      commands
-        .map(
-          (command, index) => `
-
-            <button
-              class="command-item"
-              data-command="${index}"
-            >
-
-              <span>
-                ${command[0]}
-              </span>
-
-              <small>
-                ${command[1]}
-              </small>
-
-            </button>
-
-          `
-        )
-        .join("");
+      focus:
+        () =>
+          setView(
+            "focus"
+          ),
 
 
-  $$(
-    "#commandList [data-command]"
-  ).forEach(
-    button => {
+      insights:
+        () =>
+          setView(
+            "analytics"
+          ),
+
+
+      inbox:
+        () =>
+          setView(
+            "inbox"
+          ),
+
+
+      theme:
+        () =>
+          $("#themeToggle")
+            ?.click(),
+
+
+      clearCompleted:
+        () =>
+          $("#clearCompleted")
+            ?.click()
+
+    });
+
+
+  const filtered =
+    commands.filter(
+      command =>
+        command[0]
+          .toLowerCase()
+          .includes(
+            query.toLowerCase()
+          )
+    );
+
+
+  $("#commandList").innerHTML =
+    filtered
+      .map(
+        (command, index) => `
+
+          <button
+            class="command-item"
+            data-command="${index}"
+          >
+
+            <span>
+              ${escapeText(
+                command[0]
+              )}
+            </span>
+
+            <small>
+              ${escapeText(
+                command[1]
+              )}
+            </small>
+
+          </button>
+
+        `
+      )
+      .join("");
+
+
+  $$("#commandList [data-command]")
+    .forEach(button => {
 
       button.onclick =
         () => {
 
-          commands[
-            Number(
-              button.dataset.command
-            )
-          ][2]();
+          const command =
+            filtered[
+              Number(
+                button.dataset.command
+              )
+            ];
+
+
+          command[2]();
+
 
           $("#commandDialog")
             .close();
 
         };
 
-    }
-  );
+    });
 
 }
 
 
-/* EVENTS */
+/* =========================================
+   EVENT LISTENERS
+========================================= */
 
 $("#taskForm")
   .addEventListener(
@@ -1416,43 +1396,42 @@ $("#statusSelect")
 
 
 $$(".nav-item")
-  .forEach(
-    button => {
+  .forEach(button => {
 
-      button.onclick =
-        () =>
-          setView(
-            button.dataset.view
-          );
+    button.onclick =
+      () =>
+        setView(
+          button.dataset.view
+        );
 
-    }
-  );
+  });
 
 
 $$(".filter-link")
-  .forEach(
-    button => {
+  .forEach(button => {
 
-      button.onclick =
-        () => {
+    button.onclick =
+      () => {
 
-          currentFilter =
-            button.dataset.filter;
+        currentFilter =
+          button.dataset.filter;
 
-          $("#statusSelect")
-            .value =
-              currentFilter;
 
-          setView(
-            "today"
-          );
+        $("#statusSelect")
+          .value =
+          currentFilter;
 
-          renderTasks();
 
-        };
+        setView(
+          "today"
+        );
 
-    }
-  );
+
+        renderTasks();
+
+      };
+
+  });
 
 
 $("#themeToggle")
@@ -1463,6 +1442,7 @@ $("#themeToggle")
         state.theme === "dark"
           ? "light"
           : "dark";
+
 
       save();
 
@@ -1499,19 +1479,17 @@ $("#timerReset")
 
 
 $$(".timer-options button")
-  .forEach(
-    button => {
+  .forEach(button => {
 
-      button.onclick =
-        () =>
-          setTimer(
-            Number(
-              button.dataset.minutes
-            )
-          );
+    button.onclick =
+      () =>
+        setTimer(
+          Number(
+            button.dataset.minutes
+          )
+        );
 
-    }
-  );
+  });
 
 
 $("#clearCompleted")
@@ -1524,8 +1502,8 @@ $("#clearCompleted")
 
       state.tasks =
         state.tasks.filter(
-          t =>
-            !t.completed
+          task =>
+            !task.completed
         );
 
 
@@ -1548,7 +1526,8 @@ $("#editTarget")
 
       $("#targetInput")
         .value =
-          state.target;
+        state.target;
+
 
       $("#targetDialog")
         .showModal();
@@ -1566,7 +1545,8 @@ $("#saveTarget")
           Math.min(
             20,
             Number(
-              $("#targetInput").value
+              $("#targetInput")
+                .value
             ) || 3
           )
         );
@@ -1604,7 +1584,9 @@ $("#commandInput")
   );
 
 
-/* KEYBOARD SHORTCUTS */
+/* =========================================
+   KEYBOARD SHORTCUTS
+========================================= */
 
 document.addEventListener(
   "keydown",
@@ -1617,7 +1599,7 @@ document.addEventListener(
 
       if (
         $("#commandDialog")
-          .open
+          ?.open
       ) {
 
         $("#commandDialog")
@@ -1626,16 +1608,15 @@ document.addEventListener(
       }
 
       return;
+
     }
 
 
     if (
-      (
-        event.ctrlKey ||
-        event.metaKey
-      ) &&
+      (event.ctrlKey ||
+        event.metaKey) &&
       event.key.toLowerCase() ===
-      "k"
+        "k"
     ) {
 
       event.preventDefault();
@@ -1643,6 +1624,7 @@ document.addEventListener(
       openCommands();
 
       return;
+
     }
 
 
@@ -1652,15 +1634,19 @@ document.addEventListener(
         "TEXTAREA",
         "SELECT"
       ].includes(
-        document.activeElement.tagName
+        document.activeElement
+          .tagName
       )
     ) {
+
       return;
+
     }
 
 
     if (
-      event.key === "/"
+      event.key ===
+      "/"
     ) {
 
       event.preventDefault();
@@ -1670,7 +1656,7 @@ document.addEventListener(
       );
 
       $("#searchInput")
-        .focus();
+        ?.focus();
 
     }
 
@@ -1687,7 +1673,7 @@ document.addEventListener(
       );
 
       $("#taskTitle")
-        .focus();
+        ?.focus();
 
     }
 
@@ -1707,23 +1693,38 @@ document.addEventListener(
 
 
     if (
-      event.key === "1"
+      event.key ===
+      "1"
     ) {
-      setView("today");
+
+      setView(
+        "today"
+      );
+
     }
 
 
     if (
-      event.key === "2"
+      event.key ===
+      "2"
     ) {
-      setView("inbox");
+
+      setView(
+        "inbox"
+      );
+
     }
 
 
     if (
-      event.key === "4"
+      event.key ===
+      "4"
     ) {
-      setView("analytics");
+
+      setView(
+        "analytics"
+      );
+
     }
 
 
@@ -1733,7 +1734,7 @@ document.addEventListener(
     ) {
 
       $("#themeToggle")
-        .click();
+        ?.click();
 
     }
 
@@ -1741,11 +1742,19 @@ document.addEventListener(
 );
 
 
+/* =========================================
+   CLEANUP
+========================================= */
+
 window.addEventListener(
   "beforeunload",
   () =>
     stopTimer()
 );
 
+
+/* =========================================
+   START APPLICATION
+========================================= */
 
 render();
